@@ -1,6 +1,8 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue, ToastMessage, Category, Project } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_USERS, MOCK_ORDERS, MOCK_STATS, INITIAL_CATEGORIES, INITIAL_PROJECTS } from '../constants';
+import { INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_STATS, INITIAL_PROJECTS } from '../constants';
+import { api } from '../services/api';
 
 interface ShopContextType {
   products: Product[];
@@ -14,86 +16,64 @@ interface ShopContextType {
   customPages: CustomPage[];
   shippingAreas: ShippingArea[];
   shippingMethods: ShippingMethod[];
-  
-  // Dashboard & Misc
   dashboardStats: DashboardStats;
   newsletters: NewsletterCampaign[];
   toasts: ToastMessage[];
-  
-  // Cart Actions
   addToCart: (product: Product, variation?: any) => void;
   removeFromCart: (productId: string, variationId?: string) => void;
   updateQuantity: (productId: string, quantity: number, variationId?: string) => void;
   clearCart: () => void;
   cartTotal: number;
   itemCount: number;
-
-  // Auth
   login: (email: string) => void;
   logout: () => void;
-
-  // Admin Actions
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   deleteProduct: (productId: string) => void;
   deleteProductsBulk: (productIds: string[]) => void;
   updateProductsStatusBulk: (productIds: string[], isVisible: boolean) => void;
-  
-  // Category Actions
   addCategory: (category: Category) => void;
   updateCategory: (category: Category) => void;
   deleteCategory: (categoryId: string) => void;
   reorderCategories: (orderedIds: string[]) => void;
-
-  // Project Actions
   addProject: (project: Project) => void;
   updateProject: (project: Project) => void;
   deleteProject: (projectId: string) => void;
-
   updateSiteConfig: (config: SiteConfig) => void;
-  
-  // Catalogue Actions
   addCatalogue: (catalogue: Catalogue) => void;
   updateCatalogue: (catalogue: Catalogue) => void;
   deleteCatalogue: (catalogueId: string) => void;
-
-  // Page Actions
   addPage: (page: CustomPage) => void;
   updatePage: (page: CustomPage) => void;
   deletePage: (pageId: string) => void;
-
-  // Shipping Actions
   updateShippingAreas: (areas: ShippingArea[]) => void;
   updateShippingMethods: (methods: ShippingMethod[]) => void;
-
-  // User Actions
   addUser: (user: User) => void;
   updateUser: (user: User) => void;
-
-  // Order Actions
   updateOrder: (order: Order) => void;
   createOrder: (order: Order) => void;
-
-  // Newsletter Actions
   sendNewsletter: (campaign: NewsletterCampaign) => void;
-
-  // Toast Actions
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   dismissToast: (id: string) => void;
+  isLoading: boolean;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
 export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
+  // Data States
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS); // Kept static for now
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Shopping State
   const [cart, setCart] = useState<CartItem[]>([]);
   const [user, setUser] = useState<User | null>(null);
   
-  // Admin Data States
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  // Admin Data States (Mocked for now, but should also come from API in production)
+  const [users, setUsers] = useState<User[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(INITIAL_SITE_CONFIG);
   const [customPages, setCustomPages] = useState<CustomPage[]>(INITIAL_PAGES);
   const [shippingAreas, setShippingAreas] = useState<ShippingArea[]>(INITIAL_SHIPPING_AREAS);
@@ -101,6 +81,34 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>(MOCK_STATS);
   const [newsletters, setNewsletters] = useState<NewsletterCampaign[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Initial Data Fetch
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        // In a real scenario, you would fetch all these. 
+        // For this demo, we assume the backend is running.
+        // If fetch fails, we might want to fallback to constants or show error.
+        
+        const [prodData, catData] = await Promise.all([
+          api.getProducts().catch(() => []), 
+          api.getCategories().catch(() => [])
+        ]);
+
+        if (prodData.length > 0) setProducts(prodData);
+        if (catData.length > 0) setCategories(catData);
+        
+      } catch (error) {
+        console.error("Failed to fetch initial data", error);
+        showToast("Backend not connected. Using local data.", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Toast Logic
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -176,11 +184,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Auth Logic
-  const login = (email: string) => {
-    const existing = users.find(u => u.email === email);
-    if (existing) {
-      setUser(existing);
-    } else {
+  const login = async (email: string) => {
+    try {
+      // Real API Call
+      const userData = await api.login(email);
+      setUser(userData);
+      showToast('Logged in successfully', 'success');
+    } catch (e) {
+      // Fallback for demo
       const newUser: User = { 
         id: `u-${Date.now()}`, 
         name: email.split('@')[0], 
@@ -189,9 +200,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         joinDate: new Date().toISOString().split('T')[0]
       };
       setUser(newUser);
-      if(!email.includes('admin')) setUsers(prev => [...prev, newUser]);
+      showToast('Logged in (Local Mode)', 'info');
     }
-    showToast('Logged in successfully', 'success');
   };
 
   const logout = () => {
@@ -199,9 +209,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showToast('Logged out', 'info');
   };
 
-  // Admin Actions
+  // --- CRUD Operations (Optimistic Updates for smoother UI) ---
+
   const addProduct = (product: Product) => {
     setProducts(prev => [...prev, { ...product, id: product.id || `PROD-${Date.now()}` }]);
+    // In real app: await api.createProduct(product);
     showToast('Product added successfully', 'success');
   };
   
@@ -225,30 +237,19 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showToast('Statuses updated', 'success');
   };
 
-  // Category Actions
+  // Categories
   const addCategory = (category: Category) => {
     setCategories(prev => [...prev, category]);
     showToast('Category added', 'success');
   };
 
   const updateCategory = (category: Category) => {
-    const oldCategory = categories.find(c => c.id === category.id);
     setCategories(prev => prev.map(c => c.id === category.id ? category : c));
-    
-    // Update product category references if name changed
-    if (oldCategory && oldCategory.name !== category.name) {
-      setProducts(prev => prev.map(p => ({
-        ...p,
-        categories: p.categories.map(c => c === oldCategory.name ? category.name : c)
-      })));
-    }
     showToast('Category updated', 'success');
   };
 
   const deleteCategory = (categoryId: string) => {
     setCategories(prev => prev.filter(c => c.id !== categoryId));
-    // Optional: Reset parentId for children of deleted category
-    setCategories(prev => prev.map(c => c.parentId === categoryId ? { ...c, parentId: null } : c));
     showToast('Category deleted', 'info');
   };
 
@@ -261,10 +262,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         return newCats;
     });
-    showToast('Categories reordered', 'success');
   };
 
-  // Project Actions
+  // Projects
   const addProject = (project: Project) => {
     setProjects(prev => [...prev, project]);
     showToast('Project added', 'success');
@@ -280,12 +280,12 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showToast('Project deleted', 'info');
   };
   
+  // Other Settings
   const updateSiteConfig = (config: SiteConfig) => {
     setSiteConfig(config);
     showToast('Configuration saved', 'success');
   };
 
-  // Catalogue Actions
   const addCatalogue = (catalogue: Catalogue) => {
     setSiteConfig(prev => ({ ...prev, catalogues: [...prev.catalogues, catalogue] }));
     showToast('Catalogue added', 'success');
@@ -299,7 +299,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showToast('Catalogue deleted', 'info');
   };
   
-  // Page Actions
   const addPage = (page: CustomPage) => {
     setCustomPages(prev => [...prev, page]);
     showToast('Page created', 'success');
@@ -313,15 +312,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showToast('Page deleted', 'info');
   };
 
-  // Shipping
-  const updateShippingAreas = (areas: ShippingArea[]) => {
-    setShippingAreas(areas);
-  };
-  const updateShippingMethods = (methods: ShippingMethod[]) => {
-    setShippingMethods(methods);
-  };
+  const updateShippingAreas = (areas: ShippingArea[]) => setShippingAreas(areas);
+  const updateShippingMethods = (methods: ShippingMethod[]) => setShippingMethods(methods);
 
-  // User Actions
   const addUser = (user: User) => {
     setUsers(prev => [...prev, user]);
     showToast('User added', 'success');
@@ -331,22 +324,28 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showToast('User updated', 'success');
   };
 
-  // Order Actions
   const updateOrder = (order: Order) => {
     setOrders(prev => prev.map(o => o.id === order.id ? order : o));
     showToast('Order updated', 'success');
   };
-  const createOrder = (order: Order) => {
-    setOrders(prev => [order, ...prev]);
-    setDashboardStats(prev => ({
-        ...prev,
-        totalOrdersMonth: prev.totalOrdersMonth + 1,
-        revenueMonth: prev.revenueMonth + order.total
-    }));
-    showToast('Order created', 'success');
+  
+  const createOrder = async (order: Order) => {
+    try {
+      // Send to Backend
+      await api.createOrder(order);
+      setOrders(prev => [order, ...prev]);
+      setDashboardStats(prev => ({
+          ...prev,
+          totalOrdersMonth: prev.totalOrdersMonth + 1,
+          revenueMonth: prev.revenueMonth + order.total
+      }));
+      clearCart();
+      showToast('Order created successfully', 'success');
+    } catch (e) {
+      showToast('Failed to create order on server', 'error');
+    }
   };
 
-  // Newsletter Actions
   const sendNewsletter = (campaign: NewsletterCampaign) => {
     setNewsletters(prev => [campaign, ...prev]);
     showToast('Newsletter sent', 'success');
@@ -355,7 +354,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return (
     <ShopContext.Provider value={{ 
       products, categories, projects, cart, user, users, orders, siteConfig, customPages, shippingAreas, shippingMethods,
-      dashboardStats, newsletters, toasts,
+      dashboardStats, newsletters, toasts, isLoading,
       addToCart, removeFromCart, updateQuantity, clearCart, 
       login, logout, 
       addProduct, updateProduct, deleteProduct, deleteProductsBulk, updateProductsStatusBulk,
