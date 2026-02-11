@@ -1,21 +1,23 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, CartItem, User, Order } from '../types';
-import { INITIAL_PRODUCTS } from '../constants';
+import { Product, CartItem, User, Order, SiteConfig } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG } from '../constants';
 
 interface ShopContextType {
   products: Product[];
   cart: CartItem[];
   user: User | null;
   orders: Order[];
-  addToCart: (product: Product) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  siteConfig: SiteConfig;
+  addToCart: (product: Product, variation?: any) => void;
+  removeFromCart: (productId: string, variationId?: string) => void;
+  updateQuantity: (productId: string, quantity: number, variationId?: string) => void;
   clearCart: () => void;
   login: (email: string) => void;
   logout: () => void;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   deleteProduct: (productId: string) => void;
+  updateSiteConfig: (config: SiteConfig) => void;
   cartTotal: number;
   itemCount: number;
 }
@@ -27,40 +29,75 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cart, setCart] = useState<CartItem[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(INITIAL_SITE_CONFIG);
 
   // Cart Logic
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, variation?: any) => {
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
+      // Find item with same ID AND same variation
+      const existing = prev.find((item) => {
+        const sameId = item.id === product.id;
+        const sameVariation = variation 
+          ? item.selectedVariation?.id === variation.id 
+          : !item.selectedVariation;
+        return sameId && sameVariation;
+      });
+
       if (existing) {
-        return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
+        return prev.map((item) => {
+          const sameId = item.id === product.id;
+          const sameVariation = variation 
+            ? item.selectedVariation?.id === variation.id 
+            : !item.selectedVariation;
+            
+          return (sameId && sameVariation)
+            ? { ...item, quantity: item.quantity + 1 } 
+            : item;
+        });
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { ...product, quantity: 1, selectedVariation: variation }];
     });
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (productId: string, quantity: number, variationId?: string) => {
     if (quantity < 1) {
-      removeFromCart(productId);
+      removeFromCart(productId, variationId);
       return;
     }
     setCart((prev) =>
-      prev.map((item) =>
-        item.id === productId ? { ...item, quantity: quantity } : item
-      )
+      prev.map((item) => {
+        const sameId = item.id === productId;
+        const sameVariation = variationId 
+          ? item.selectedVariation?.id === variationId 
+          : !item.selectedVariation;
+
+        return (sameId && sameVariation) ? { ...item, quantity: quantity } : item;
+      })
     );
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== productId));
+  const removeFromCart = (productId: string, variationId?: string) => {
+    setCart((prev) => prev.filter((item) => {
+      const sameId = item.id === productId;
+      const sameVariation = variationId 
+        ? item.selectedVariation?.id === variationId 
+        : !item.selectedVariation;
+      return !(sameId && sameVariation);
+    }));
   };
 
   const clearCart = () => setCart([]);
 
   const cartTotal = cart.reduce((sum, item) => {
-    const price = item.onSale && item.salePrice ? item.salePrice : item.price;
+    // Use variation price if available
+    let price = item.price;
+    if (item.selectedVariation) {
+      if (item.onSale && item.selectedVariation.salePrice) price = item.selectedVariation.salePrice;
+      else if (item.selectedVariation.price) price = item.selectedVariation.price;
+      else if (item.onSale && item.salePrice) price = item.salePrice;
+    } else {
+       if (item.onSale && item.salePrice) price = item.salePrice;
+    }
     return sum + price * item.quantity;
   }, 0);
   
@@ -96,7 +133,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Admin Logic
   const addProduct = (product: Product) => {
-    setProducts(prev => [...prev, product]);
+    // Generate ID if not provided (though AdminEditor will likely provide one)
+    const newProduct = { ...product, id: product.id || `PROD-${Date.now()}` };
+    setProducts(prev => [...prev, newProduct]);
   };
 
   const updateProduct = (product: Product) => {
@@ -107,12 +146,16 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setProducts(prev => prev.filter(p => p.id !== productId));
   };
 
+  const updateSiteConfig = (config: SiteConfig) => {
+    setSiteConfig(config);
+  };
+
   return (
     <ShopContext.Provider value={{ 
-      products, cart, user, orders, 
+      products, cart, user, orders, siteConfig,
       addToCart, removeFromCart, updateQuantity, clearCart, 
       login, logout, 
-      addProduct, updateProduct, deleteProduct,
+      addProduct, updateProduct, deleteProduct, updateSiteConfig,
       cartTotal, itemCount 
     }}>
       {children}

@@ -1,3 +1,25 @@
+export interface ProductVariation {
+  id: string;
+  type: string; // e.g., 'Color', 'Size'
+  value: string; // e.g., 'Red', 'XL'
+  price?: number;
+  salePrice?: number;
+  image?: string;
+  modelNumber?: string;
+  description?: string;
+}
+
+export interface ProductSpecification {
+  key: string;
+  value: string;
+}
+
+export interface ProductTab {
+  id: string;
+  title: string;
+  content: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -5,12 +27,17 @@ export interface Product {
   price: number;
   salePrice?: number;
   onSale?: boolean;
-  description: string;
+  shortDescription: string;
+  description: string; // Long description
   modelNumber: string;
-  image: string;
-  images?: string[]; // For gallery
+  image: string; // Thumbnail
+  images: string[]; // Gallery
   rating: number;
   features: string[];
+  isVisible: boolean;
+  variations: ProductVariation[];
+  specifications: ProductSpecification[];
+  customTabs: ProductTab[];
 }
 
 export interface Category {
@@ -23,13 +50,14 @@ export interface Catalogue {
   id: string;
   title: string;
   coverImage: string;
-  pdfUrl: string; // In a real app this is a path to a PDF
+  pdfUrl: string;
   description: string;
   season: string;
 }
 
 export interface CartItem extends Product {
   quantity: number;
+  selectedVariation?: ProductVariation;
 }
 
 export interface Order {
@@ -45,4 +73,24 @@ export interface User {
   name: string;
   email: string;
   isAdmin: boolean;
+}
+
+export interface SiteConfig {
+  heroSlides: {
+    id: number;
+    image: string;
+    title: string;
+    subtitle: string;
+  }[];
+  about: {
+    title: string;
+    content: string;
+    image: string;
+  };
+  shipping: {
+    content: string;
+  };
+  returns: {
+    content: string;
+  };
 }

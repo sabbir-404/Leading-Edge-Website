@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Product } from '../types';
+import { Product, ProductVariation } from '../types';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useShop } from '../context/ShopContext';
@@ -14,11 +14,15 @@ const ProductDetails: React.FC = () => {
   const [product, setProduct] = useState<Product | undefined>(undefined);
   const [activeTab, setActiveTab] = useState('desc');
   const [mainImage, setMainImage] = useState('');
+  
+  // Variations State
+  const [selectedVariation, setSelectedVariation] = useState<ProductVariation | undefined>(undefined);
 
   useEffect(() => {
     const found = products.find(p => p.id === id);
     if (found) {
       setProduct(found);
+      // Set initial image (prefer variation image if selected, else main)
       setMainImage(found.image);
       window.scrollTo(0, 0);
     }
@@ -26,9 +30,33 @@ const ProductDetails: React.FC = () => {
 
   if (!product) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
+  if (!product.isVisible) {
+      return (
+        <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+             <h1 className="text-2xl font-bold">Product Unavailable</h1>
+             <p>This product is currently hidden or out of stock.</p>
+             <button onClick={() => navigate('/')} className="text-accent underline">Return Home</button>
+        </div>
+      );
+  }
+
+  // Derived Display Values based on variation
+  const currentPrice = selectedVariation?.price ?? product.price;
+  const currentSalePrice = selectedVariation?.salePrice ?? product.salePrice;
+  const currentModelNumber = selectedVariation?.modelNumber || product.modelNumber;
+  
+  // Handling image switch on variation select
+  const handleVariationSelect = (v: ProductVariation) => {
+    setSelectedVariation(v);
+    if (v.image) setMainImage(v.image);
+  };
+
+  const uniqueVariationTypes = Array.from(new Set(product.variations.map(v => v.type)));
+
   const tabs = [
     { id: 'desc', label: 'Description' },
     { id: 'specs', label: 'Specifications' },
+    ...product.customTabs.map(t => ({ id: t.id, label: t.title })), // Dynamic Tabs
     { id: 'reviews', label: 'Reviews (124)' },
     { id: 'shipping', label: 'Shipping' },
     { id: 'returns', label: 'Returns & Exchange' },
@@ -55,7 +83,6 @@ const ProductDetails: React.FC = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   key={mainImage}
-                  // Changed aspect-square to aspect-[4/3] on mobile to save vertical space
                   className="w-full bg-gray-100 aspect-[4/3] md:aspect-square rounded-lg overflow-hidden border border-gray-100 relative mb-4"
                 >
                   <img src={mainImage} alt={product.name} className="w-full h-full object-cover" />
@@ -93,16 +120,16 @@ const ProductDetails: React.FC = () => {
             <h1 className="text-2xl md:text-5xl font-serif font-bold text-primary mb-2 leading-tight">
               {product.name}
             </h1>
-            <p className="text-sm text-gray-400 mb-6 font-mono">Model: {product.modelNumber}</p>
+            <p className="text-sm text-gray-400 mb-6 font-mono">Model: {currentModelNumber}</p>
             
             <div className="flex items-end gap-4 mb-8 border-b border-gray-100 pb-8">
               {product.onSale ? (
                 <div className="flex flex-col">
-                   <span className="text-3xl font-bold text-red-600">${product.salePrice}</span>
-                   <span className="text-lg text-gray-400 line-through">${product.price}</span>
+                   <span className="text-3xl font-bold text-red-600">${currentSalePrice}</span>
+                   <span className="text-lg text-gray-400 line-through">${currentPrice}</span>
                 </div>
               ) : (
-                <span className="text-3xl font-semibold text-primary">${product.price}</span>
+                <span className="text-3xl font-semibold text-primary">${currentPrice}</span>
               )}
               
               <div className="flex items-center text-accent mb-1 ml-auto">
@@ -112,23 +139,51 @@ const ProductDetails: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-gray-600 leading-relaxed mb-8 text-lg">
-              {product.description}
+            {/* Short Desc */}
+            <p className="text-gray-600 leading-relaxed mb-6 text-lg">
+               {product.shortDescription || product.description.substring(0, 150) + '...'}
             </p>
+
+            {/* Variations */}
+            {uniqueVariationTypes.length > 0 && (
+               <div className="mb-8 space-y-4">
+                  {uniqueVariationTypes.map(type => (
+                     <div key={type}>
+                        <h4 className="font-bold text-sm mb-2">{type}</h4>
+                        <div className="flex gap-2 flex-wrap">
+                           {product.variations.filter(v => v.type === type).map(v => (
+                              <button
+                                 key={v.id}
+                                 onClick={() => handleVariationSelect(v)}
+                                 className={`px-4 py-2 rounded border text-sm transition-all ${selectedVariation?.id === v.id ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 hover:border-gray-400'}`}
+                              >
+                                 {v.value}
+                              </button>
+                           ))}
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            )}
 
             <div className="space-y-4 mb-8">
                <button 
-                  onClick={() => addToCart(product)}
-                  className="w-full bg-primary text-white py-4 px-8 font-medium hover:bg-gray-800 transition-colors shadow-lg flex items-center justify-center gap-2"
+                  onClick={() => addToCart(product, selectedVariation)}
+                  disabled={uniqueVariationTypes.length > 0 && !selectedVariation}
+                  className="w-full bg-primary text-white py-4 px-8 font-medium hover:bg-gray-800 transition-colors shadow-lg flex items-center justify-center gap-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart size={20} /> Add to Cart
                 </button>
                 <button 
-                  onClick={() => { addToCart(product); navigate('/checkout'); }}
-                  className="w-full bg-accent text-white py-4 px-8 font-medium hover:bg-orange-600 transition-colors shadow-lg flex items-center justify-center gap-2"
+                  onClick={() => { addToCart(product, selectedVariation); navigate('/checkout'); }}
+                  disabled={uniqueVariationTypes.length > 0 && !selectedVariation}
+                  className="w-full bg-accent text-white py-4 px-8 font-medium hover:bg-orange-600 transition-colors shadow-lg flex items-center justify-center gap-2 disabled:bg-orange-200 disabled:cursor-not-allowed"
                 >
                   <Zap size={20} fill="currentColor" /> Buy Now
                 </button>
+                {uniqueVariationTypes.length > 0 && !selectedVariation && (
+                   <p className="text-red-500 text-sm text-center">Please select options before adding to cart.</p>
+                )}
             </div>
 
             <div className="flex items-center gap-2 text-sm text-green-600 mb-12">
@@ -158,15 +213,28 @@ const ProductDetails: React.FC = () => {
 
               <div className="py-6 text-gray-600 leading-relaxed text-sm">
                 {activeTab === 'desc' && (
-                  <p>Experience the perfect blend of style and comfort with the {product.name}. Designed by award-winning furniture architects, this piece utilizes sustainable materials sourced from verified suppliers.</p>
+                  <p>{product.description}</p>
                 )}
                 {activeTab === 'specs' && (
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Model: {product.modelNumber}</li>
-                    <li>Dimensions: 32" H x 64" W x 36" D</li>
-                    <li>Material: Solid Oak, Linen</li>
-                  </ul>
+                   <div className="bg-gray-50 rounded-lg p-6">
+                      <table className="w-full">
+                         <tbody>
+                            <tr className="border-b border-gray-200"><td className="py-2 font-bold w-1/3">Model</td><td className="py-2">{currentModelNumber}</td></tr>
+                            {product.specifications.map((spec, idx) => (
+                               <tr key={idx} className="border-b border-gray-200 last:border-0">
+                                  <td className="py-2 font-bold text-gray-700">{spec.key}</td>
+                                  <td className="py-2 text-gray-600">{spec.value}</td>
+                               </tr>
+                            ))}
+                         </tbody>
+                      </table>
+                   </div>
                 )}
+                {/* Dynamic Tabs */}
+                {product.customTabs.map(t => (
+                   activeTab === t.id && <div key={t.id} className="prose prose-sm max-w-none">{t.content}</div>
+                ))}
+                
                 {activeTab === 'reviews' && <p>Customer reviews content...</p>}
                 {activeTab === 'shipping' && <p>Standard shipping: 5-7 business days. White glove available.</p>}
                 {activeTab === 'returns' && <p>30-Day Return Policy on original condition items.</p>}
@@ -175,7 +243,7 @@ const ProductDetails: React.FC = () => {
           </div>
         </div>
 
-        {/* You Might Also Like */}
+        {/* Related Products */}
         <h2 className="text-2xl font-serif font-bold mb-8">Related Products</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
            {products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4).map(p => (

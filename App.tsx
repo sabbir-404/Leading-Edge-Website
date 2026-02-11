@@ -14,6 +14,8 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
+import AdminProductEditor from './pages/AdminProductEditor';
+import AdminContent from './pages/AdminContent';
 import RequireAuth from './components/RequireAuth';
 import { ShopProvider } from './context/ShopContext';
 
@@ -47,6 +49,8 @@ const AnimatedRoutes = () => {
         <Route path="/returns" element={<PageTransition><Returns /></PageTransition>} />
         <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+        
+        {/* Admin Routes */}
         <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
         <Route 
           path="/admin" 
@@ -54,6 +58,26 @@ const AnimatedRoutes = () => {
             <PageTransition>
               <RequireAuth adminOnly>
                 <Admin />
+              </RequireAuth>
+            </PageTransition>
+          } 
+        />
+        <Route 
+          path="/admin/product/:id" 
+          element={
+            <PageTransition>
+              <RequireAuth adminOnly>
+                <AdminProductEditor />
+              </RequireAuth>
+            </PageTransition>
+          } 
+        />
+        <Route 
+          path="/admin/content" 
+          element={
+            <PageTransition>
+              <RequireAuth adminOnly>
+                <AdminContent />
               </RequireAuth>
             </PageTransition>
           } 

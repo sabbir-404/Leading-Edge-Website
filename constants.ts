@@ -1,4 +1,4 @@
-import { Product, Category, Catalogue } from './types';
+import { Product, Category, Catalogue, SiteConfig } from './types';
 
 export const CATEGORIES: Category[] = [
   { id: '1', name: 'Furniture', image: 'https://picsum.photos/seed/furn/400/400' },
@@ -72,9 +72,10 @@ const generateProducts = (category: string, count: number, startId: number): Pro
       price: price,
       salePrice: onSale ? Math.floor(price * 0.8) : undefined,
       onSale: onSale,
-      description: `A stunning piece of ${category.toLowerCase()} that blends modern aesthetics with timeless utility.`,
+      shortDescription: `Elegant ${category.toLowerCase()} piece.`,
+      description: `A stunning piece of ${category.toLowerCase()} that blends modern aesthetics with timeless utility. Crafted with precision and care, this item is designed to elevate your living space.`,
       modelNumber: `LE-${category.substring(0, 3).toUpperCase()}-${startId + i}`,
-      image: `https://picsum.photos/seed/${category}${i}/600/600`, // 1:1 Ratio
+      image: `https://picsum.photos/seed/${category}${i}/600/600`, 
       images: [
         `https://picsum.photos/seed/${category}${i}/600/600`,
         `https://picsum.photos/seed/${category}${i}a/600/600`,
@@ -82,16 +83,37 @@ const generateProducts = (category: string, count: number, startId: number): Pro
       ],
       rating: 4 + Math.random(),
       features: ['Premium Materials', 'Handcrafted', '5-Year Warranty', 'Eco-Friendly'],
+      isVisible: true,
+      variations: [],
+      specifications: [
+        { key: 'Material', value: 'Premium Composite' },
+        { key: 'Dimensions', value: 'Standard' }
+      ],
+      customTabs: []
     };
   });
 };
 
-// Initial Data Loading
 export const INITIAL_PRODUCTS = [
   ...generateProducts('Furniture', 12, 100),
   ...generateProducts('Light', 12, 200),
   ...generateProducts('Kitchenware', 12, 300),
   ...generateProducts('Hardware', 12, 400),
 ];
+
+export const INITIAL_SITE_CONFIG: SiteConfig = {
+  heroSlides: HERO_SLIDES,
+  about: {
+    title: "Crafting the Future of Living",
+    content: "Founded in 2024, Leading Edge was born from a desire to bridge the gap between high-concept art and functional living. We believe that furniture shouldn't just fill a space; it should define it. Our curators travel the globe to find pieces that speak to the modern soul—minimalist yet bold, sustainable yet luxurious.",
+    image: "https://picsum.photos/seed/showroom/1920/1080"
+  },
+  shipping: {
+    content: "Leading Edge offers shipping to all 50 states. Orders are typically processed within 1-2 business days. Standard shipping takes 5-7 business days to arrive. For large furniture items (sofas, beds, dining tables), we utilize a White Glove Delivery service."
+  },
+  returns: {
+    content: "We want you to be completely satisfied with your purchase. If you are not happy with your item, you may return it within 30 days of receiving your order for a full refund or exchange. Items must be unused, unwashed, and in their original condition."
+  }
+};
 
 export const FEATURED_SECTIONS_TITLES = ['Furniture', 'Light', 'Kitchenware', 'Hardware'];
