@@ -88,8 +88,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         setIsLoading(true);
         const [prodData, catData] = await Promise.all([
-          api.getProducts().catch(err => { console.error(err); return []; }), 
-          api.getCategories().catch(err => { console.error(err); return []; })
+          api.getProducts().catch(err => { console.error('Products fetch error:', err); return []; }), 
+          api.getCategories().catch(err => { console.error('Categories fetch error:', err); return []; })
         ]);
 
         if (prodData.length > 0) setProducts(prodData);
@@ -97,7 +97,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
       } catch (error) {
         console.error("Failed to fetch initial data", error);
-        showToast("Backend connection failed.", "error");
+        showToast("Backend connection failed. Ensure server is running.", "error");
       } finally {
         setIsLoading(false);
       }
@@ -110,7 +110,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => dismissToast(id), 3000);
+    setTimeout(() => dismissToast(id), 5000); // Increased duration to read errors
   };
 
   const dismissToast = (id: string) => {
@@ -186,6 +186,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(userData);
       showToast('Logged in successfully', 'success');
     } catch (e) {
+      // Fallback for demo
       const newUser: User = { 
         id: `u-${Date.now()}`, 
         name: email.split('@')[0], 
@@ -194,7 +195,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         joinDate: new Date().toISOString().split('T')[0]
       };
       setUser(newUser);
-      showToast('Logged in (Local)', 'info');
+      showToast('Logged in (Local Mode)', 'info');
     }
   };
 
@@ -207,17 +208,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addProduct = async (product: Product) => {
     try {
-        // Ensure ID
         const newProduct = { ...product, id: product.id || `PROD-${Date.now()}` };
         // Optimistic Update
         setProducts(prev => [...prev, newProduct]);
-        
         await api.createProduct(newProduct);
-        showToast('Product added successfully', 'success');
-    } catch (e) {
-        showToast('Failed to save product', 'error');
-        console.error(e);
-        // Revert optimistic update? For simplicity, we keep it but warn user.
+        showToast('Product saved to database', 'success');
+    } catch (e: any) {
+        showToast(`Failed to save: ${e.message}`, 'error');
+        console.error("Add Product Error:", e);
+        // We could revert optimistic update here, but we'll leave it for now so data isn't lost in UI
     }
   };
   
@@ -225,9 +224,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
         setProducts(prev => prev.map(p => p.id === product.id ? product : p));
         await api.updateProduct(product);
-        showToast('Product updated', 'success');
-    } catch (e) {
-        showToast('Failed to update product', 'error');
+        showToast('Product updated successfully', 'success');
+    } catch (e: any) {
+        showToast(`Failed to update: ${e.message}`, 'error');
     }
   };
 
@@ -235,16 +234,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
         setProducts(prev => prev.filter(p => p.id !== productId));
         await api.deleteProduct(productId);
-        showToast('Product deleted', 'info');
-    } catch (e) {
-        showToast('Failed to delete product', 'error');
+        showToast('Product deleted from database', 'info');
+    } catch (e: any) {
+        showToast(`Failed to delete: ${e.message}`, 'error');
     }
   };
 
   const deleteProductsBulk = (productIds: string[]) => {
-    // Bulk delete API not implemented in backend yet, doing one by one or just UI update
     setProducts(prev => prev.filter(p => !productIds.includes(p.id)));
-    // Ideally loop and call API
+    // Ideally loop and call API or bulk API
     productIds.forEach(id => api.deleteProduct(id).catch(console.error));
     showToast(`${productIds.length} products deleted`, 'info');
   };
@@ -253,7 +251,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setProducts(prev => prev.map(p => {
         if (productIds.includes(p.id)) {
             const updated = { ...p, isVisible };
-            api.updateProduct(updated).catch(console.error); // Update individually in background
+            api.updateProduct(updated).catch(console.error);
             return updated;
         }
         return p;
@@ -266,9 +264,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
         setCategories(prev => [...prev, category]);
         await api.createCategory(category);
-        showToast('Category added', 'success');
-    } catch (e) {
-        showToast('Failed to add category', 'error');
+        showToast('Category saved', 'success');
+    } catch (e: any) {
+        showToast(`Failed to save category: ${e.message}`, 'error');
     }
   };
 
@@ -277,8 +275,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setCategories(prev => prev.map(c => c.id === category.id ? category : c));
         await api.updateCategory(category);
         showToast('Category updated', 'success');
-    } catch (e) {
-        showToast('Failed to update category', 'error');
+    } catch (e: any) {
+        showToast(`Failed to update category: ${e.message}`, 'error');
     }
   };
 
@@ -287,8 +285,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setCategories(prev => prev.filter(c => c.id !== categoryId));
         await api.deleteCategory(categoryId);
         showToast('Category deleted', 'info');
-    } catch (e) {
-        showToast('Failed to delete category', 'error');
+    } catch (e: any) {
+        showToast(`Failed to delete category: ${e.message}`, 'error');
     }
   };
 
@@ -306,7 +304,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  // Projects (Local State Only for now, backend not implemented in schema yet for projects)
+  // Projects (Local State Only for now)
   const addProject = (project: Project) => {
     setProjects(prev => [...prev, project]);
     showToast('Project added (Local Only)', 'success');
@@ -322,7 +320,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showToast('Project deleted (Local Only)', 'info');
   };
   
-  // Other Settings (Local Only for now)
+  // Other Settings
   const updateSiteConfig = (config: SiteConfig) => {
     setSiteConfig(config);
     showToast('Configuration saved (Local Only)', 'success');
@@ -382,8 +380,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }));
       clearCart();
       showToast('Order created successfully', 'success');
-    } catch (e) {
-      showToast('Failed to create order on server', 'error');
+    } catch (e: any) {
+      showToast(`Failed to create order: ${e.message}`, 'error');
     }
   };
 

@@ -30,7 +30,7 @@ const pool = mysql.createPool(dbConfig);
     const connection = await pool.getConnection();
     console.log('✅ Connected to MySQL Database successfully!');
     
-    // Auto-migration: Check if extra_data column exists, if not add it (Rough migration)
+    // Auto-migration: Check if extra_data column exists, if not add it
     try {
         await connection.query('SELECT extra_data FROM products LIMIT 1');
     } catch (e) {
@@ -50,7 +50,7 @@ const pool = mysql.createPool(dbConfig);
 // Get Products
 app.get('/api/products', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM products'); // Removed is_visible filter for admin fetching
+    const [rows] = await pool.query('SELECT * FROM products');
     
     for (let product of rows) {
        // Fetch Relations
@@ -62,20 +62,25 @@ app.get('/api/products', async (req, res) => {
        
        // Parse JSON Extra Data
        if (product.extra_data) {
-           const extra = JSON.parse(product.extra_data);
-           product.variations = extra.variations || [];
-           product.specifications = extra.specifications || [];
-           product.customTabs = extra.customTabs || [];
-           product.features = extra.features || [];
-           product.weight = extra.weight || 0;
-           product.specificShippingCharges = extra.specificShippingCharges || [];
-           product.rating = extra.rating || 5;
-       } else {
-           // Defaults
-           product.variations = []; 
-           product.specifications = []; 
-           product.customTabs = [];
+           try {
+               const extra = JSON.parse(product.extra_data);
+               product.variations = extra.variations || [];
+               product.specifications = extra.specifications || [];
+               product.customTabs = extra.customTabs || [];
+               product.features = extra.features || [];
+               product.weight = extra.weight || 0;
+               product.specificShippingCharges = extra.specificShippingCharges || [];
+               product.rating = extra.rating || 5;
+           } catch (e) {
+               console.error("Error parsing extra_data for product " + product.id, e);
+           }
        }
+       
+       // Ensure arrays exist if null
+       if (!product.variations) product.variations = [];
+       if (!product.specifications) product.specifications = [];
+       if (!product.customTabs) product.customTabs = [];
+
        // Boolean conversion
        product.onSale = Boolean(product.on_sale);
        product.isVisible = Boolean(product.is_visible);
@@ -132,8 +137,8 @@ app.post('/api/products', async (req, res) => {
         res.status(201).json({ message: 'Product created', id: p.id });
     } catch (error) {
         await conn.rollback();
-        console.error(error);
-        res.status(500).json({ error: error.message });
+        console.error("Create Product Error:", error);
+        res.status(500).json({ message: error.message });
     } finally {
         conn.release();
     }
@@ -182,8 +187,8 @@ app.put('/api/products/:id', async (req, res) => {
         res.json({ message: 'Product updated' });
     } catch (error) {
         await conn.rollback();
-        console.error(error);
-        res.status(500).json({ error: error.message });
+        console.error("Update Product Error:", error);
+        res.status(500).json({ message: error.message });
     } finally {
         conn.release();
     }
@@ -195,7 +200,8 @@ app.delete('/api/products/:id', async (req, res) => {
         await pool.query('DELETE FROM products WHERE id = ?', [req.params.id]);
         res.json({ message: 'Product deleted' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Delete Product Error:", error);
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -215,7 +221,7 @@ app.get('/api/categories', async (req, res) => {
     }));
     res.json(categories);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -228,8 +234,8 @@ app.post('/api/categories', async (req, res) => {
         );
         res.status(201).json({ message: 'Category created' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message });
+        console.error("Create Category Error:", error);
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -242,8 +248,8 @@ app.put('/api/categories/:id', async (req, res) => {
         );
         res.json({ message: 'Category updated' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message });
+        console.error("Update Category Error:", error);
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -252,7 +258,8 @@ app.delete('/api/categories/:id', async (req, res) => {
         await pool.query('DELETE FROM categories WHERE id=?', [req.params.id]);
         res.json({ message: 'Category deleted' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Delete Category Error:", error);
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -273,7 +280,7 @@ app.post('/api/orders', async (req, res) => {
   } catch (error) {
     await conn.rollback();
     console.error(error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: error.message });
   } finally {
     conn.release();
   }
