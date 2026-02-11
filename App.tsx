@@ -17,7 +17,11 @@ import AdminLogin from './pages/AdminLogin';
 import AdminProductEditor from './pages/AdminProductEditor';
 import AdminContent from './pages/AdminContent';
 import AdminShipping from './pages/AdminShipping';
+import AdminPages from './pages/AdminPages';
+import AdminUsers from './pages/AdminUsers';
+import AdminOrders from './pages/AdminOrders';
 import RequireAuth from './components/RequireAuth';
+import AdminLayout from './components/AdminLayout';
 import { ShopProvider } from './context/ShopContext';
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
@@ -36,63 +40,38 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
 const AnimatedRoutes = () => {
   const location = useLocation();
 
+  // Determine if we are in admin to avoid page transition for nested routes which causes flickering
+  const isAdmin = location.pathname.startsWith('/admin') && location.pathname !== '/admin/login';
+
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location} key={isAdmin ? 'admin-root' : location.pathname}>
         <Route path="/" element={<PageTransition><Home /></PageTransition>} />
         <Route path="/gallery/:category" element={<PageTransition><CategoryGallery /></PageTransition>} />
         <Route path="/search" element={<PageTransition><SearchResults /></PageTransition>} />
         <Route path="/catalogue/:id" element={<PageTransition><CatalogueViewer /></PageTransition>} />
         <Route path="/product/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
         <Route path="/checkout" element={<PageTransition><Checkout /></PageTransition>} />
+        
+        {/* Static Pages replaced/augmented by DB pages, but keeping route mapping for legacy or specific layouts */}
         <Route path="/about" element={<PageTransition><About /></PageTransition>} />
         <Route path="/shipping" element={<PageTransition><Shipping /></PageTransition>} />
         <Route path="/returns" element={<PageTransition><Returns /></PageTransition>} />
+        
         <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
-        
-        {/* Admin Routes */}
         <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
-        <Route 
-          path="/admin" 
-          element={
-            <PageTransition>
-              <RequireAuth adminOnly>
-                <Admin />
-              </RequireAuth>
-            </PageTransition>
-          } 
-        />
-        <Route 
-          path="/admin/product/:id" 
-          element={
-            <PageTransition>
-              <RequireAuth adminOnly>
-                <AdminProductEditor />
-              </RequireAuth>
-            </PageTransition>
-          } 
-        />
-        <Route 
-          path="/admin/content" 
-          element={
-            <PageTransition>
-              <RequireAuth adminOnly>
-                <AdminContent />
-              </RequireAuth>
-            </PageTransition>
-          } 
-        />
-        <Route 
-          path="/admin/shipping" 
-          element={
-            <PageTransition>
-              <RequireAuth adminOnly>
-                <AdminShipping />
-              </RequireAuth>
-            </PageTransition>
-          } 
-        />
+        
+        {/* Admin Nested Routes */}
+        <Route path="/admin" element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}>
+           <Route index element={<Admin />} />
+           <Route path="product/:id" element={<AdminProductEditor />} />
+           <Route path="content" element={<AdminContent />} />
+           <Route path="pages" element={<AdminPages />} />
+           <Route path="shipping" element={<AdminShipping />} />
+           <Route path="users" element={<AdminUsers />} />
+           <Route path="orders" element={<AdminOrders />} />
+        </Route>
       </Routes>
     </AnimatePresence>
   );

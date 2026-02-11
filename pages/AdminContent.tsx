@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import AdminLayout from '../components/AdminLayout';
 import { useShop } from '../context/ShopContext';
-import { Save, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Save, Plus, Trash2 } from 'lucide-react';
 import { CATEGORIES } from '../constants';
 
 const AdminContent: React.FC = () => {
-  const { siteConfig, updateSiteConfig, products } = useShop();
+  const { siteConfig, updateSiteConfig } = useShop();
   const [config, setConfig] = useState(siteConfig);
   const [activeSection, setActiveSection] = useState('home');
   const [activeSubTab, setActiveSubTab] = useState('hero');
@@ -64,7 +63,7 @@ const AdminContent: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="flex justify-between items-center mb-8">
            <h1 className="text-3xl font-bold text-gray-800">Content Management</h1>
            <button 
@@ -80,8 +79,9 @@ const AdminContent: React.FC = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                  <button onClick={() => setActiveSection('home')} className={`w-full text-left px-6 py-4 font-medium border-l-4 ${activeSection === 'home' ? 'border-accent bg-orange-50 text-accent' : 'border-transparent hover:bg-gray-50'}`}>Home Page</button>
                  <button onClick={() => setActiveSection('catalogues')} className={`w-full text-left px-6 py-4 font-medium border-l-4 ${activeSection === 'catalogues' ? 'border-accent bg-orange-50 text-accent' : 'border-transparent hover:bg-gray-50'}`}>Catalogues</button>
-                 <button onClick={() => setActiveSection('about')} className={`w-full text-left px-6 py-4 font-medium border-l-4 ${activeSection === 'about' ? 'border-accent bg-orange-50 text-accent' : 'border-transparent hover:bg-gray-50'}`}>About Us</button>
-                 <button onClick={() => setActiveSection('policies')} className={`w-full text-left px-6 py-4 font-medium border-l-4 ${activeSection === 'policies' ? 'border-accent bg-orange-50 text-accent' : 'border-transparent hover:bg-gray-50'}`}>Policies</button>
+                 <div className="p-4 bg-gray-50 text-xs text-gray-500 border-t">
+                    Note: "About", "Shipping", and "Returns" pages are now managed under the <strong>Pages</strong> tab.
+                 </div>
               </div>
            </div>
 
@@ -209,42 +209,10 @@ const AdminContent: React.FC = () => {
                         ))}
                     </div>
                  )}
-
-                 {activeSection === 'about' && (
-                    <div className="space-y-6">
-                       <h2 className="text-2xl font-bold">About Page Content</h2>
-                       <div>
-                          <label className="block font-bold mb-2">Page Title</label>
-                          <input className="w-full border p-3 rounded" value={config.about.title} onChange={e => setConfig({...config, about: {...config.about, title: e.target.value}})} />
-                       </div>
-                       <div>
-                          <label className="block font-bold mb-2">Hero Image</label>
-                          <input className="w-full border p-3 rounded" value={config.about.image} onChange={e => setConfig({...config, about: {...config.about, image: e.target.value}})} />
-                       </div>
-                       <div>
-                          <label className="block font-bold mb-2">Main Content</label>
-                          <textarea className="w-full border p-3 rounded h-40" value={config.about.content} onChange={e => setConfig({...config, about: {...config.about, content: e.target.value}})} />
-                       </div>
-                    </div>
-                 )}
-
-                 {activeSection === 'policies' && (
-                    <div className="space-y-8">
-                       <h2 className="text-2xl font-bold">Policy Pages</h2>
-                       <div>
-                          <h3 className="text-lg font-bold mb-3 text-accent">Shipping Policy</h3>
-                          <textarea className="w-full border p-3 rounded h-40" value={config.shipping.content} onChange={e => setConfig({...config, shipping: { content: e.target.value }})} />
-                       </div>
-                       <div>
-                          <h3 className="text-lg font-bold mb-3 text-accent">Returns Policy</h3>
-                          <textarea className="w-full border p-3 rounded h-40" value={config.returns.content} onChange={e => setConfig({...config, returns: { content: e.target.value }})} />
-                       </div>
-                    </div>
-                 )}
               </div>
            </div>
         </div>
-    </AdminLayout>
+    </>
   );
 };
 

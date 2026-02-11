@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '../components/AdminLayout';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Edit, Plus, Eye, EyeOff, Search, Filter, MoreHorizontal, CheckSquare, Square } from 'lucide-react';
+import { Trash2, Edit, Plus, Eye, EyeOff, Search, CheckSquare, Square } from 'lucide-react';
 import { Product } from '../types';
 
 const Admin: React.FC = () => {
@@ -84,7 +83,7 @@ const Admin: React.FC = () => {
   const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
 
   return (
-    <AdminLayout>
+    <>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Products Inventory</h1>
@@ -223,7 +222,7 @@ const Admin: React.FC = () => {
         </table>
         {filteredProducts.length === 0 && <div className="p-8 text-center text-gray-500">No products match your filters.</div>}
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

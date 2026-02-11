@@ -67,19 +67,31 @@ export interface CartItem extends Product {
   selectedVariation?: ProductVariation;
 }
 
-export interface Order {
-  id: string;
-  date: string;
-  items: CartItem[];
-  total: number;
-  status: 'Processing' | 'Shipped' | 'Delivered';
-}
-
 export interface User {
   id: string;
   name: string;
   email: string;
-  isAdmin: boolean;
+  phone?: string;
+  address?: string;
+  role: 'admin' | 'moderator' | 'customer';
+  joinDate: string;
+}
+
+export interface Order {
+  id: string;
+  userId?: string; // Link to User
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  shippingAddress: string;
+  date: string;
+  items: CartItem[];
+  subtotal: number;
+  shippingCost: number;
+  tax: number;
+  total: number;
+  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  paymentStatus: 'Paid' | 'Unpaid';
 }
 
 export interface HeroSlide {
@@ -100,6 +112,26 @@ export interface HomeSection {
   isVisible: boolean;
 }
 
+export interface PageSection {
+  id: string;
+  type: 'text' | 'image-text' | 'columns';
+  content: string; // For text
+  image?: string;
+  title?: string;
+  columns?: string[]; // Array of strings for column content
+}
+
+export interface CustomPage {
+  id: string;
+  title: string;
+  slug: string; // url friendly
+  hasHero: boolean;
+  heroImage?: string;
+  sections: PageSection[];
+  placement: 'navbar' | 'footer' | 'both' | 'none';
+  isSystem?: boolean; // If true, prevents deletion (e.g. About Us)
+}
+
 export interface ShippingArea {
   id: string;
   name: string;
@@ -118,24 +150,13 @@ export interface ShippingMethod {
   type: 'flat' | 'weight';
   flatRate?: number;
   weightRates?: ShippingRate[];
-  isGlobal: boolean; // If true, applies to all unless specific products excluded?
-  specificProductIds?: string[]; // Only applies to these products if not global
-  specificCategoryIds?: string[];
+  isGlobal: boolean; 
+  specificProductIds?: string[];
 }
 
 export interface SiteConfig {
   heroSlides: HeroSlide[];
   homeSections: HomeSection[];
   catalogues: Catalogue[];
-  about: {
-    title: string;
-    content: string;
-    image: string;
-  };
-  shipping: {
-    content: string;
-  };
-  returns: {
-    content: string;
-  };
+  // Legacy about/shipping/returns removed in favor of CustomPage
 }

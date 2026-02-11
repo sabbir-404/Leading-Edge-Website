@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import { useShop } from '../context/ShopContext';
 import { ArrowLeft, Star, CheckCircle2, ShoppingCart, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { CURRENCY } from '../constants';
 
 const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,7 +23,6 @@ const ProductDetails: React.FC = () => {
     const found = products.find(p => p.id === id);
     if (found) {
       setProduct(found);
-      // Set initial image (prefer variation image if selected, else main)
       setMainImage(found.image);
       window.scrollTo(0, 0);
     }
@@ -45,7 +45,6 @@ const ProductDetails: React.FC = () => {
   const currentSalePrice = selectedVariation?.salePrice ?? product.salePrice;
   const currentModelNumber = selectedVariation?.modelNumber || product.modelNumber;
   
-  // Handling image switch on variation select
   const handleVariationSelect = (v: ProductVariation) => {
     setSelectedVariation(v);
     if (v.image) setMainImage(v.image);
@@ -56,7 +55,7 @@ const ProductDetails: React.FC = () => {
   const tabs = [
     { id: 'desc', label: 'Description' },
     { id: 'specs', label: 'Specifications' },
-    ...product.customTabs.map(t => ({ id: t.id, label: t.title })), // Dynamic Tabs
+    ...product.customTabs.map(t => ({ id: t.id, label: t.title })),
     { id: 'reviews', label: 'Reviews (124)' },
     { id: 'shipping', label: 'Shipping' },
     { id: 'returns', label: 'Returns & Exchange' },
@@ -76,7 +75,6 @@ const ProductDetails: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-20">
           
-          {/* Left Column: Sticky Image & Gallery */}
           <div className="relative">
              <div className="sticky top-24">
                 <motion.div 
@@ -93,7 +91,6 @@ const ProductDetails: React.FC = () => {
                   )}
                 </motion.div>
                 
-                {/* Thumbnails */}
                 <div className="grid grid-cols-4 gap-4">
                    <div 
                       className={`aspect-square rounded border cursor-pointer overflow-hidden ${mainImage === product.image ? 'border-primary' : 'border-transparent'}`}
@@ -114,7 +111,6 @@ const ProductDetails: React.FC = () => {
              </div>
           </div>
 
-          {/* Right Column: Details */}
           <div className="flex flex-col">
             <span className="text-gray-400 text-sm mb-2">{product.category}</span>
             <h1 className="text-2xl md:text-5xl font-serif font-bold text-primary mb-2 leading-tight">
@@ -125,11 +121,11 @@ const ProductDetails: React.FC = () => {
             <div className="flex items-end gap-4 mb-8 border-b border-gray-100 pb-8">
               {product.onSale ? (
                 <div className="flex flex-col">
-                   <span className="text-3xl font-bold text-red-600">${currentSalePrice}</span>
-                   <span className="text-lg text-gray-400 line-through">${currentPrice}</span>
+                   <span className="text-3xl font-bold text-red-600">{CURRENCY}{currentSalePrice}</span>
+                   <span className="text-lg text-gray-400 line-through">{CURRENCY}{currentPrice}</span>
                 </div>
               ) : (
-                <span className="text-3xl font-semibold text-primary">${currentPrice}</span>
+                <span className="text-3xl font-semibold text-primary">{CURRENCY}{currentPrice}</span>
               )}
               
               <div className="flex items-center text-accent mb-1 ml-auto">
@@ -139,12 +135,10 @@ const ProductDetails: React.FC = () => {
               </div>
             </div>
 
-            {/* Short Desc */}
             <p className="text-gray-600 leading-relaxed mb-6 text-lg">
                {product.shortDescription || product.description.substring(0, 150) + '...'}
             </p>
 
-            {/* Variations */}
             {uniqueVariationTypes.length > 0 && (
                <div className="mb-8 space-y-4">
                   {uniqueVariationTypes.map(type => (
@@ -191,7 +185,6 @@ const ProductDetails: React.FC = () => {
                <span>In Stock & Ready to Ship</span>
             </div>
 
-            {/* Tabs */}
             <div className="mt-8">
               <div className="border-b border-gray-200 overflow-x-auto no-scrollbar">
                 <div className="flex min-w-max">
@@ -230,20 +223,18 @@ const ProductDetails: React.FC = () => {
                       </table>
                    </div>
                 )}
-                {/* Dynamic Tabs */}
                 {product.customTabs.map(t => (
                    activeTab === t.id && <div key={t.id} className="prose prose-sm max-w-none">{t.content}</div>
                 ))}
                 
                 {activeTab === 'reviews' && <p>Customer reviews content...</p>}
-                {activeTab === 'shipping' && <p>Standard shipping: 5-7 business days. White glove available.</p>}
-                {activeTab === 'returns' && <p>30-Day Return Policy on original condition items.</p>}
+                {activeTab === 'shipping' && <p>Standard shipping: 2-3 business days inside Dhaka.</p>}
+                {activeTab === 'returns' && <p>7-Day Return Policy on original condition items.</p>}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Related Products */}
         <h2 className="text-2xl font-serif font-bold mb-8">Related Products</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
            {products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4).map(p => (
@@ -255,11 +246,11 @@ const ProductDetails: React.FC = () => {
                <div className="flex gap-2 text-sm">
                   {p.onSale ? (
                      <>
-                        <span className="text-red-600 font-bold">${p.salePrice}</span>
-                        <span className="text-gray-400 line-through">${p.price}</span>
+                        <span className="text-red-600 font-bold">{CURRENCY}{p.salePrice}</span>
+                        <span className="text-gray-400 line-through">{CURRENCY}{p.price}</span>
                      </>
                   ) : (
-                     <span className="text-gray-500">${p.price}</span>
+                     <span className="text-gray-500">{CURRENCY}{p.price}</span>
                   )}
                </div>
              </div>

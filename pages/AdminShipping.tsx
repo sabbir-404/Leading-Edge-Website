@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import AdminLayout from '../components/AdminLayout';
 import { useShop } from '../context/ShopContext';
 import { Plus, Trash2, Save } from 'lucide-react';
 import { ShippingArea, ShippingMethod, ShippingRate } from '../types';
@@ -77,7 +76,7 @@ const AdminShipping: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="flex justify-between items-center mb-8">
            <h1 className="text-3xl font-bold text-gray-800">Shipping Settings</h1>
            <button 
@@ -228,7 +227,7 @@ const AdminShipping: React.FC = () => {
             )}
          </div>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

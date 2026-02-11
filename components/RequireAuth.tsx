@@ -20,7 +20,7 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, adminOnly = false }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (adminOnly && !user.isAdmin) {
+  if (adminOnly && user.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
 

@@ -4,28 +4,35 @@ import Footer from '../components/Footer';
 import { useShop } from '../context/ShopContext';
 
 const About: React.FC = () => {
-  const { siteConfig } = useShop();
+  const { customPages } = useShop();
+  const page = customPages.find(p => p.slug === 'about');
   
+  if (!page) return null;
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       
       {/* Hero */}
-      <div className="w-full aspect-video md:h-[500px] bg-black relative overflow-hidden">
-         <img 
-            src={siteConfig.about.image} 
-            alt="About Hero" 
-            className="w-full h-full object-cover opacity-60"
-         />
-         <div className="absolute inset-0 flex items-center justify-center">
-             <h1 className="text-4xl md:text-6xl font-serif font-bold text-white drop-shadow-lg">{siteConfig.about.title}</h1>
-         </div>
-      </div>
+      {page.hasHero && page.heroImage && (
+        <div className="w-full aspect-video md:h-[500px] bg-black relative overflow-hidden">
+           <img 
+              src={page.heroImage} 
+              alt="About Hero" 
+              className="w-full h-full object-cover opacity-60"
+           />
+           <div className="absolute inset-0 flex items-center justify-center">
+               <h1 className="text-4xl md:text-6xl font-serif font-bold text-white drop-shadow-lg">{page.title}</h1>
+           </div>
+        </div>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 py-16">
-         <div className="prose prose-lg mx-auto text-gray-600 leading-relaxed whitespace-pre-wrap">
-            {siteConfig.about.content}
-         </div>
+         {page.sections.map(section => (
+            <div key={section.id} className="prose prose-lg mx-auto text-gray-600 leading-relaxed whitespace-pre-wrap mb-8">
+                {section.content}
+            </div>
+         ))}
       </div>
 
       <div className="bg-gray-50 py-16">
