@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { Product, ProductVariation, ProductSpecification, ProductTab, SpecificShippingCharge } from '../types';
-import { Save, Eye, ArrowLeft, Plus, Trash2, EyeOff } from 'lucide-react';
+import { Save, Eye, ArrowLeft, Plus, Trash2, CheckSquare, Square } from 'lucide-react';
 import { CURRENCY } from '../constants';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -10,7 +10,7 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 const AdminProductEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products, addProduct, updateProduct, shippingAreas } = useShop();
+  const { products, addProduct, updateProduct, shippingAreas, showToast } = useShop();
   const [activeTab, setActiveTab] = useState('general');
   const [showPreview, setShowPreview] = useState(false);
 
@@ -18,7 +18,7 @@ const AdminProductEditor: React.FC = () => {
   const [formData, setFormData] = useState<Product>({
     id: `PROD-${Date.now()}`,
     name: '',
-    category: 'Furniture',
+    categories: ['Furniture'], // Default category
     price: 0,
     shortDescription: '',
     description: '',
@@ -51,13 +51,31 @@ const AdminProductEditor: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleCategoryChange = (category: string) => {
+    setFormData(prev => {
+        const cats = prev.categories || [];
+        if (cats.includes(category)) {
+            return { ...prev, categories: cats.filter(c => c !== category) };
+        } else {
+            return { ...prev, categories: [...cats, category] };
+        }
+    });
+  };
+
   const handleSave = () => {
+    if (formData.categories.length === 0) {
+        showToast('Please select at least one category', 'error');
+        return;
+    }
+    
     if (id === 'new') {
       addProduct(formData);
     } else {
       updateProduct(formData);
     }
-    navigate('/admin');
+    // Stay on page and show notification is handled by context actions mostly, 
+    // but context actions for add/update product currently show toast.
+    // We will just wait.
   };
 
   // Grouped Variations Logic
@@ -118,6 +136,7 @@ const AdminProductEditor: React.FC = () => {
   };
   const removeShippingCharge = (idx: number) => setFormData(prev => ({ ...prev, specificShippingCharges: prev.specificShippingCharges?.filter((_, i) => i !== idx) }));
 
+  const availableCategories = ['Furniture', 'Light', 'Kitchenware', 'Hardware', 'Decor', 'Outdoor', 'Rugs', 'Bath'];
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -163,8 +182,21 @@ const AdminProductEditor: React.FC = () => {
                          </label>
                       </div>
                       <div><label className="block text-sm font-bold mb-2">Name</label><input className="w-full border p-3 rounded" value={formData.name} onChange={e => handleChange('name', e.target.value)} /></div>
+                      
                       <div className="grid grid-cols-2 gap-6">
-                         <div><label className="block text-sm font-bold mb-2">Category</label><select className="w-full border p-3 rounded" value={formData.category} onChange={e => handleChange('category', e.target.value)}>{['Furniture', 'Light', 'Kitchenware', 'Hardware', 'Decor', 'Outdoor', 'Rugs', 'Bath'].map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                         <div>
+                            <label className="block text-sm font-bold mb-2">Categories (Select All applicable)</label>
+                            <div className="border rounded-lg p-3 max-h-40 overflow-y-auto bg-gray-50">
+                                {availableCategories.map(c => (
+                                    <label key={c} className="flex items-center gap-2 mb-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
+                                        <div onClick={(e) => { e.preventDefault(); handleCategoryChange(c); }}>
+                                            {formData.categories.includes(c) ? <CheckSquare size={18} className="text-accent"/> : <Square size={18} className="text-gray-400"/>}
+                                        </div>
+                                        <span className={formData.categories.includes(c) ? 'font-bold text-gray-800' : 'text-gray-600'}>{c}</span>
+                                    </label>
+                                ))}
+                            </div>
+                         </div>
                          <div><label className="block text-sm font-bold mb-2">Model Number</label><input className="w-full border p-3 rounded" value={formData.modelNumber} onChange={e => handleChange('modelNumber', e.target.value)} /></div>
                       </div>
                       <div className="grid grid-cols-3 gap-6">

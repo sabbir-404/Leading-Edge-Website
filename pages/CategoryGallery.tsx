@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import { Product } from '../types';
 import { ShoppingCart, Filter, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CURRENCY } from '../constants';
 
 const CategoryGallery: React.FC = () => {
   const { category } = useParams<{ category: string }>();
@@ -27,7 +28,8 @@ const CategoryGallery: React.FC = () => {
       if (category.toLowerCase() === 'sale') {
         result = result.filter(p => p.onSale);
       } else {
-        result = result.filter(p => p.category.toLowerCase() === category.toLowerCase());
+        // Filter if category is in the categories array
+        result = result.filter(p => p.categories.some(c => c.toLowerCase() === category.toLowerCase()));
       }
     }
 
@@ -48,7 +50,7 @@ const CategoryGallery: React.FC = () => {
     } else if (sortOption === 'high-low') {
       result.sort((a, b) => (b.onSale && b.salePrice ? b.salePrice : b.price) - (a.onSale && a.salePrice ? a.salePrice : a.price));
     } else {
-        // Mock newest by ID or random for now since we don't have dates
+        // Mock newest by ID
         result.sort((a, b) => b.id.localeCompare(a.id)); 
     }
 
@@ -70,12 +72,12 @@ const CategoryGallery: React.FC = () => {
         </select>
       </div>
       <div>
-        <h4 className="font-bold mb-3">Price Range: ${priceRange[0]} - ${priceRange[1]}</h4>
+        <h4 className="font-bold mb-3">Price Range: {CURRENCY}{priceRange[0]} - {CURRENCY}{priceRange[1]}</h4>
         <input 
           type="range" 
           min="0" 
-          max="2000" 
-          step="50"
+          max="10000" 
+          step="500"
           value={priceRange[1]}
           onChange={(e) => setPriceRange([0, Number(e.target.value)])}
           className="w-full accent-primary"
@@ -161,11 +163,11 @@ const CategoryGallery: React.FC = () => {
                       <div className="flex items-center gap-2 text-sm mt-1">
                          {product.onSale ? (
                             <>
-                              <span className="font-bold text-red-600">${product.salePrice}</span>
-                              <span className="text-gray-400 line-through">${product.price}</span>
+                              <span className="font-bold text-red-600">{CURRENCY}{product.salePrice}</span>
+                              <span className="text-gray-400 line-through">{CURRENCY}{product.price}</span>
                             </>
                          ) : (
-                            <span className="font-bold text-gray-900">${product.price}</span>
+                            <span className="font-bold text-gray-900">{CURRENCY}{product.price}</span>
                          )}
                       </div>
                     </div>

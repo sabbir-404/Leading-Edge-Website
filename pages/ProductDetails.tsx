@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Product, ProductVariation } from '../types';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useShop } from '../context/ShopContext';
-import { ArrowLeft, Star, CheckCircle2, ShoppingCart, Zap } from 'lucide-react';
+import { ArrowLeft, Star, CheckCircle2, ShoppingCart, Zap, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CURRENCY } from '../constants';
 
@@ -19,6 +19,9 @@ const ProductDetails: React.FC = () => {
   // Variations State
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation | undefined>(undefined);
 
+  // Tab Scroll Ref
+  const tabContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const found = products.find(p => p.id === id);
     if (found) {
@@ -27,6 +30,24 @@ const ProductDetails: React.FC = () => {
       window.scrollTo(0, 0);
     }
   }, [id, products]);
+
+  const handleMouseMoveTabs = (e: React.MouseEvent) => {
+    const container = tabContainerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+
+    // Scroll regions
+    const triggerZone = 50; 
+    
+    if (x < triggerZone) {
+       container.scrollBy({ left: -10, behavior: 'auto' });
+    } else if (x > width - triggerZone) {
+       container.scrollBy({ left: 10, behavior: 'auto' });
+    }
+  };
 
   if (!product) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
@@ -61,17 +82,23 @@ const ProductDetails: React.FC = () => {
     { id: 'returns', label: 'Returns & Exchange' },
   ];
 
+  // Breadcrumbs Logic (using first category for main path)
+  const mainCategory = product.categories[0] || 'Uncategorized';
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="flex items-center text-sm text-gray-500 hover:text-primary mb-6 transition-colors"
-        >
-          <ArrowLeft size={16} className="mr-2" /> Back
-        </button>
+        
+        {/* Breadcrumbs */}
+        <div className="flex items-center text-xs text-gray-500 mb-6 flex-wrap">
+            <Link to="/" className="hover:text-primary">Home</Link>
+            <ChevronRight size={12} className="mx-2"/>
+            <Link to={`/gallery/${mainCategory}`} className="hover:text-primary">{mainCategory}</Link>
+            <ChevronRight size={12} className="mx-2"/>
+            <span className="font-medium text-gray-800 truncate max-w-[200px]">{product.name}</span>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-20">
           
@@ -112,7 +139,11 @@ const ProductDetails: React.FC = () => {
           </div>
 
           <div className="flex flex-col">
-            <span className="text-gray-400 text-sm mb-2">{product.category}</span>
+            <div className="flex flex-wrap gap-2 mb-2">
+                {product.categories.map(cat => (
+                    <span key={cat} className="text-gray-400 text-sm bg-gray-50 px-2 py-1 rounded">{cat}</span>
+                ))}
+            </div>
             <h1 className="text-2xl md:text-5xl font-serif font-bold text-primary mb-2 leading-tight">
               {product.name}
             </h1>
@@ -186,7 +217,11 @@ const ProductDetails: React.FC = () => {
             </div>
 
             <div className="mt-8">
-              <div className="border-b border-gray-200 overflow-x-auto no-scrollbar">
+              <div 
+                className="border-b border-gray-200 overflow-x-auto no-scrollbar relative"
+                ref={tabContainerRef}
+                onMouseMove={handleMouseMoveTabs}
+              >
                 <div className="flex min-w-max">
                   {tabs.map((tab) => (
                     <button
@@ -237,7 +272,7 @@ const ProductDetails: React.FC = () => {
 
         <h2 className="text-2xl font-serif font-bold mb-8">Related Products</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-           {products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4).map(p => (
+           {products.filter(p => p.categories.some(c => product.categories.includes(c)) && p.id !== product.id).slice(0, 4).map(p => (
              <div key={p.id} className="cursor-pointer group" onClick={() => navigate(`/product/${p.id}`)}>
                <div className="bg-gray-100 aspect-square rounded-lg mb-3 overflow-hidden">
                  <img src={p.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

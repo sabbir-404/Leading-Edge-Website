@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Product } from '../types';
 import { ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { CURRENCY } from '../constants';
 
 interface ProductSliderProps {
   title: string;
@@ -70,7 +71,6 @@ const ProductSlider: React.FC<ProductSliderProps> = ({ title, products, autoSlid
           {products.map((product) => (
             <div 
               key={product.id} 
-              // Changed min-width to support 2 items on mobile (around 160px for 360-390px screens)
               className="min-w-[160px] md:min-w-[320px] snap-start group cursor-pointer"
               onClick={() => navigate(`/product/${product.id}`)}
             >
@@ -91,15 +91,14 @@ const ProductSlider: React.FC<ProductSliderProps> = ({ title, products, autoSlid
               </div>
               <div>
                 <h4 className="font-medium text-sm md:text-lg text-primary line-clamp-1">{product.name}</h4>
-                <p className="text-xs md:text-sm text-gray-500 mb-1">{product.category}</p>
                 <div className="flex items-center gap-2">
                   {product.onSale ? (
                     <>
-                      <span className="font-semibold text-sm md:text-base text-red-600">${product.salePrice}</span>
-                      <span className="text-xs md:text-sm text-gray-400 line-through">${product.price}</span>
+                      <span className="font-semibold text-sm md:text-base text-red-600">{CURRENCY}{product.salePrice}</span>
+                      <span className="text-xs md:text-sm text-gray-400 line-through">{CURRENCY}{product.price}</span>
                     </>
                   ) : (
-                    <span className="font-semibold text-sm md:text-base text-primary">${product.price}</span>
+                    <span className="font-semibold text-sm md:text-base text-primary">{CURRENCY}{product.price}</span>
                   )}
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue } from '../types';
+import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue, ToastMessage } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_USERS, MOCK_ORDERS, MOCK_STATS } from '../constants';
 
 interface ShopContextType {
@@ -16,6 +16,7 @@ interface ShopContextType {
   // Dashboard & Misc
   dashboardStats: DashboardStats;
   newsletters: NewsletterCampaign[];
+  toasts: ToastMessage[];
   
   // Cart Actions
   addToCart: (product: Product, variation?: any) => void;
@@ -62,6 +63,10 @@ interface ShopContextType {
 
   // Newsletter Actions
   sendNewsletter: (campaign: NewsletterCampaign) => void;
+
+  // Toast Actions
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  dismissToast: (id: string) => void;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -80,6 +85,18 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>(INITIAL_SHIPPING_METHODS);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>(MOCK_STATS);
   const [newsletters, setNewsletters] = useState<NewsletterCampaign[]>([]);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Toast Logic
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => dismissToast(id), 3000);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   // Cart Logic
   const addToCart = (product: Product, variation?: any) => {
@@ -103,6 +120,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return [...prev, { ...product, quantity: 1, selectedVariation: variation }];
     });
+    showToast('Added to Cart', 'success');
   };
 
   const updateQuantity = (productId: string, quantity: number, variationId?: string) => {
@@ -145,12 +163,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Auth Logic
   const login = (email: string) => {
-    // Find in mock users or create session
     const existing = users.find(u => u.email === email);
     if (existing) {
       setUser(existing);
     } else {
-      // Mock login fallback
       const newUser: User = { 
         id: `u-${Date.now()}`, 
         name: email.split('@')[0], 
@@ -161,64 +177,116 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(newUser);
       if(!email.includes('admin')) setUsers(prev => [...prev, newUser]);
     }
+    showToast('Logged in successfully', 'success');
   };
 
   const logout = () => {
     setUser(null);
+    showToast('Logged out', 'info');
   };
 
   // Admin Actions
-  const addProduct = (product: Product) => setProducts(prev => [...prev, { ...product, id: product.id || `PROD-${Date.now()}` }]);
-  const updateProduct = (product: Product) => setProducts(prev => prev.map(p => p.id === product.id ? product : p));
-  const deleteProduct = (productId: string) => setProducts(prev => prev.filter(p => p.id !== productId));
-  const deleteProductsBulk = (productIds: string[]) => setProducts(prev => prev.filter(p => !productIds.includes(p.id)));
-  const updateProductsStatusBulk = (productIds: string[], isVisible: boolean) => setProducts(prev => prev.map(p => productIds.includes(p.id) ? { ...p, isVisible } : p));
+  const addProduct = (product: Product) => {
+    setProducts(prev => [...prev, { ...product, id: product.id || `PROD-${Date.now()}` }]);
+    showToast('Product added successfully', 'success');
+  };
   
-  const updateSiteConfig = (config: SiteConfig) => setSiteConfig(config);
+  const updateProduct = (product: Product) => {
+    setProducts(prev => prev.map(p => p.id === product.id ? product : p));
+    showToast('Product updated', 'success');
+  };
+
+  const deleteProduct = (productId: string) => {
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    showToast('Product deleted', 'info');
+  };
+
+  const deleteProductsBulk = (productIds: string[]) => {
+    setProducts(prev => prev.filter(p => !productIds.includes(p.id)));
+    showToast(`${productIds.length} products deleted`, 'info');
+  };
+
+  const updateProductsStatusBulk = (productIds: string[], isVisible: boolean) => {
+    setProducts(prev => prev.map(p => productIds.includes(p.id) ? { ...p, isVisible } : p));
+    showToast('Statuses updated', 'success');
+  };
+  
+  const updateSiteConfig = (config: SiteConfig) => {
+    setSiteConfig(config);
+    showToast('Configuration saved', 'success');
+  };
 
   // Catalogue Actions
   const addCatalogue = (catalogue: Catalogue) => {
     setSiteConfig(prev => ({ ...prev, catalogues: [...prev.catalogues, catalogue] }));
+    showToast('Catalogue added', 'success');
   };
   const updateCatalogue = (catalogue: Catalogue) => {
     setSiteConfig(prev => ({ ...prev, catalogues: prev.catalogues.map(c => c.id === catalogue.id ? catalogue : c) }));
+    showToast('Catalogue updated', 'success');
   };
   const deleteCatalogue = (catalogueId: string) => {
     setSiteConfig(prev => ({ ...prev, catalogues: prev.catalogues.filter(c => c.id !== catalogueId) }));
+    showToast('Catalogue deleted', 'info');
   };
   
   // Page Actions
-  const addPage = (page: CustomPage) => setCustomPages(prev => [...prev, page]);
-  const updatePage = (page: CustomPage) => setCustomPages(prev => prev.map(p => p.id === page.id ? page : p));
-  const deletePage = (pageId: string) => setCustomPages(prev => prev.filter(p => p.id !== pageId));
+  const addPage = (page: CustomPage) => {
+    setCustomPages(prev => [...prev, page]);
+    showToast('Page created', 'success');
+  };
+  const updatePage = (page: CustomPage) => {
+    setCustomPages(prev => prev.map(p => p.id === page.id ? page : p));
+    showToast('Page updated', 'success');
+  };
+  const deletePage = (pageId: string) => {
+    setCustomPages(prev => prev.filter(p => p.id !== pageId));
+    showToast('Page deleted', 'info');
+  };
 
   // Shipping
-  const updateShippingAreas = (areas: ShippingArea[]) => setShippingAreas(areas);
-  const updateShippingMethods = (methods: ShippingMethod[]) => setShippingMethods(methods);
+  const updateShippingAreas = (areas: ShippingArea[]) => {
+    setShippingAreas(areas);
+  };
+  const updateShippingMethods = (methods: ShippingMethod[]) => {
+    setShippingMethods(methods);
+  };
 
   // User Actions
-  const addUser = (user: User) => setUsers(prev => [...prev, user]);
-  const updateUser = (user: User) => setUsers(prev => prev.map(u => u.id === user.id ? user : u));
+  const addUser = (user: User) => {
+    setUsers(prev => [...prev, user]);
+    showToast('User added', 'success');
+  };
+  const updateUser = (user: User) => {
+    setUsers(prev => prev.map(u => u.id === user.id ? user : u));
+    showToast('User updated', 'success');
+  };
 
   // Order Actions
-  const updateOrder = (order: Order) => setOrders(prev => prev.map(o => o.id === order.id ? order : o));
+  const updateOrder = (order: Order) => {
+    setOrders(prev => prev.map(o => o.id === order.id ? order : o));
+    showToast('Order updated', 'success');
+  };
   const createOrder = (order: Order) => {
     setOrders(prev => [order, ...prev]);
-    // Update Dashboard Stats (mock)
     setDashboardStats(prev => ({
         ...prev,
         totalOrdersMonth: prev.totalOrdersMonth + 1,
         revenueMonth: prev.revenueMonth + order.total
     }));
+    showToast('Order created', 'success');
   };
 
   // Newsletter Actions
-  const sendNewsletter = (campaign: NewsletterCampaign) => setNewsletters(prev => [campaign, ...prev]);
+  const sendNewsletter = (campaign: NewsletterCampaign) => {
+    setNewsletters(prev => [campaign, ...prev]);
+    showToast('Newsletter sent', 'success');
+  };
 
   return (
     <ShopContext.Provider value={{ 
       products, cart, user, users, orders, siteConfig, customPages, shippingAreas, shippingMethods,
-      dashboardStats, newsletters,
+      dashboardStats, newsletters, toasts,
       addToCart, removeFromCart, updateQuantity, clearCart, 
       login, logout, 
       addProduct, updateProduct, deleteProduct, deleteProductsBulk, updateProductsStatusBulk,
@@ -229,6 +297,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       addUser, updateUser,
       updateOrder, createOrder,
       sendNewsletter,
+      showToast, dismissToast,
       cartTotal, itemCount 
     }}>
       {children}

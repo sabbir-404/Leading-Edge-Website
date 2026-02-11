@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
-import { MAIN_MENU_CATEGORIES, CATEGORIES } from '../constants';
+import { MAIN_MENU_CATEGORIES, CATEGORIES, CURRENCY } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar: React.FC = () => {
@@ -31,8 +31,8 @@ const Navbar: React.FC = () => {
     if (searchQuery.trim().length > 0) {
       const filtered = products.filter(p => 
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 5); // Limit preview to 5
+        p.categories.some(c => c.toLowerCase().includes(searchQuery.toLowerCase()))
+      ).slice(0, 5); 
       setSearchResults(filtered);
       setShowSearchDropdown(true);
     } else {
@@ -123,7 +123,7 @@ const Navbar: React.FC = () => {
                           <img src={result.image} alt={result.name} className="w-10 h-10 rounded object-cover" />
                           <div>
                             <p className="text-sm font-medium text-gray-800">{result.name}</p>
-                            <p className="text-xs text-gray-500">{result.category}</p>
+                            <p className="text-xs text-gray-500">{result.categories[0]}</p>
                           </div>
                         </li>
                       ))}
@@ -213,7 +213,7 @@ const Navbar: React.FC = () => {
                               <img src={item.image} alt={item.name} className="w-16 h-16 rounded object-cover bg-gray-50" />
                               <div className="flex-1">
                                 <h4 className="text-sm font-medium line-clamp-1">{item.name}</h4>
-                                <p className="text-xs text-gray-500 mb-2">${item.onSale && item.salePrice ? item.salePrice : item.price}</p>
+                                <p className="text-xs text-gray-500 mb-2">{CURRENCY}{item.onSale && item.salePrice ? item.salePrice : item.price}</p>
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center border border-gray-200 rounded">
                                     <button 
@@ -247,7 +247,7 @@ const Navbar: React.FC = () => {
                       <div className="bg-gray-50 p-4 border-t border-gray-100">
                         <div className="flex justify-between items-center mb-4">
                           <span className="text-sm font-medium">Subtotal</span>
-                          <span className="font-bold text-primary">${cartTotal.toFixed(2)}</span>
+                          <span className="font-bold text-primary">{CURRENCY}{cartTotal.toFixed(2)}</span>
                         </div>
                         <button 
                           onClick={() => navigate('/checkout')}

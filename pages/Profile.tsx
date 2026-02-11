@@ -4,6 +4,7 @@ import Footer from '../components/Footer';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
 import { Download, Package, User as UserIcon } from 'lucide-react';
+import { CURRENCY } from '../constants';
 
 const Profile: React.FC = () => {
   const { user, orders, logout } = useShop();
@@ -69,14 +70,14 @@ const Profile: React.FC = () => {
                            <h4 className="font-medium">{item.name}</h4>
                            <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                          </div>
-                         <div className="ml-auto font-medium">${item.price}</div>
+                         <div className="ml-auto font-medium">{CURRENCY}{item.price}</div>
                        </div>
                      ))}
                      <div className="border-t border-gray-100 mt-4 pt-4 flex justify-between items-center">
                        <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
                          <Package size={16} /> {order.status}
                        </div>
-                       <div className="text-lg font-bold">Total: ${order.total}</div>
+                       <div className="text-lg font-bold">Total: {CURRENCY}{order.total}</div>
                      </div>
                    </div>
                  </div>

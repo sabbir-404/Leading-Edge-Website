@@ -28,22 +28,22 @@ export interface SpecificShippingCharge {
 export interface Product {
   id: string;
   name: string;
-  category: string;
+  categories: string[]; // Changed from single category to array
   price: number;
   salePrice?: number;
   onSale?: boolean;
   shortDescription: string;
-  description: string; // Long description
+  description: string;
   modelNumber: string;
-  image: string; // Thumbnail
-  images: string[]; // Gallery
+  image: string;
+  images: string[];
   rating: number;
   features: string[];
   isVisible: boolean;
   variations: ProductVariation[];
   specifications: ProductSpecification[];
   customTabs: ProductTab[];
-  weight?: number; // in kg or lbs
+  weight?: number;
   specificShippingCharges?: SpecificShippingCharge[];
 }
 
@@ -79,7 +79,7 @@ export interface User {
 
 export interface Order {
   id: string;
-  userId?: string; // Link to User
+  userId?: string; 
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
@@ -108,28 +108,28 @@ export interface HomeSection {
   id: string;
   title: string;
   type: 'category' | 'ids';
-  value: string | string[]; // Category Name or Array of Product IDs
+  value: string | string[]; 
   isVisible: boolean;
 }
 
 export interface PageSection {
   id: string;
   type: 'text' | 'image-text' | 'columns';
-  content: string; // For text
+  content: string; 
   image?: string;
   title?: string;
-  columns?: string[]; // Array of strings for column content
+  columns?: string[]; 
 }
 
 export interface CustomPage {
   id: string;
   title: string;
-  slug: string; // url friendly
+  slug: string; 
   hasHero: boolean;
   heroImage?: string;
   sections: PageSection[];
   placement: 'navbar' | 'footer' | 'both' | 'none';
-  isSystem?: boolean; // If true, prevents deletion (e.g. About Us)
+  isSystem?: boolean; 
 }
 
 export interface ShippingArea {
@@ -171,8 +171,27 @@ export interface DashboardStats {
   recentActivity: string[];
 }
 
+export interface HeaderFooterConfig {
+  logoUrl: string;
+  phone: string;
+  email: string;
+  address: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  twitterUrl: string;
+  youtubeUrl: string;
+  copyrightText: string;
+}
+
 export interface SiteConfig {
   heroSlides: HeroSlide[];
   homeSections: HomeSection[];
   catalogues: Catalogue[];
+  headerFooter: HeaderFooterConfig;
+}
+
+export interface ToastMessage {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
 }

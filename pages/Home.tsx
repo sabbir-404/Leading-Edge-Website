@@ -45,7 +45,8 @@ const Home: React.FC = () => {
              let sectionProducts: typeof products = [];
              
              if (section.type === 'category') {
-                 sectionProducts = products.filter(p => p.category === section.value && p.isVisible);
+                 // Check if the product has the section value in its categories array
+                 sectionProducts = products.filter(p => p.categories.includes(section.value as string) && p.isVisible);
              } else if (section.type === 'ids' && Array.isArray(section.value)) {
                  sectionProducts = products.filter(p => (section.value as string[]).includes(p.id) && p.isVisible);
              }
@@ -54,7 +55,6 @@ const Home: React.FC = () => {
              
              return (
               <div key={section.id} className="relative">
-                  {/* See All Link logic depends on if it's a category. If custom collection, maybe link to search or specific page? Default to first product category for now if category type. */}
                   {section.type === 'category' && (
                       <div className="max-w-7xl mx-auto px-4 relative top-16 z-10 flex justify-end pointer-events-none">
                         <div className="pointer-events-auto">

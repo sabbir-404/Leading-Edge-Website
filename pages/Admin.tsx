@@ -3,6 +3,7 @@ import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, Edit, Plus, Eye, EyeOff, Search, CheckSquare, Square } from 'lucide-react';
 import { Product } from '../types';
+import { CURRENCY } from '../constants';
 
 const Admin: React.FC = () => {
   const { user, products, deleteProduct, updateProduct, deleteProductsBulk, updateProductsStatusBulk } = useShop();
@@ -34,7 +35,7 @@ const Admin: React.FC = () => {
     }
 
     if (filterCategory !== 'All') {
-      result = result.filter(p => p.category === filterCategory);
+      result = result.filter(p => p.categories.includes(filterCategory));
     }
 
     if (filterStatus !== 'All') {
@@ -80,7 +81,7 @@ const Admin: React.FC = () => {
 
   if (!user || !user.email.includes('admin')) return null;
 
-  const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  const categories = ['All', ...Array.from(new Set(products.flatMap(p => p.categories)))];
 
   return (
     <>
@@ -187,16 +188,16 @@ const Admin: React.FC = () => {
                 <td className="p-4">
                   {p.onSale ? (
                     <div>
-                      <span className="text-red-600 font-bold">${p.salePrice}</span>
+                      <span className="text-red-600 font-bold">{CURRENCY}{p.salePrice}</span>
                       <br/>
-                      <span className="text-gray-400 text-xs line-through">${p.price}</span>
+                      <span className="text-gray-400 text-xs line-through">{CURRENCY}{p.price}</span>
                     </div>
                   ) : (
-                    <span className="font-medium">${p.price}</span>
+                    <span className="font-medium">{CURRENCY}{p.price}</span>
                   )}
                 </td>
                 <td className="p-4 text-sm">
-                  <span className="bg-gray-100 rounded-full px-3 py-1 inline-block text-gray-600">{p.category}</span>
+                  <span className="bg-gray-100 rounded-full px-3 py-1 inline-block text-gray-600">{p.categories[0]}</span>
                 </td>
                 <td className="p-4 text-right">
                   <div className="flex justify-end gap-2">

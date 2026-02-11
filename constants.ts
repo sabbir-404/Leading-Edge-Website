@@ -47,7 +47,7 @@ const generateProducts = (category: string, count: number, startId: number): Pro
     return {
       id: `${category}-${startId + i}`,
       name: `${category} Model ${i + 1}`,
-      category: category,
+      categories: [category], // Updated to array
       price: price,
       salePrice: onSale ? Math.floor(price * 0.8) : undefined,
       onSale: onSale,
@@ -81,7 +81,18 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
     { id: 'sec-1', title: 'Furniture', type: 'category', value: 'Furniture', isVisible: true },
     { id: 'sec-2', title: 'Light', type: 'category', value: 'Light', isVisible: true },
   ],
-  catalogues: INITIAL_CATALOGUES
+  catalogues: INITIAL_CATALOGUES,
+  headerFooter: {
+    logoUrl: '/Logo/logo black.png',
+    phone: '+1 (555) 123-4567',
+    email: 'support@leadingedge.com',
+    address: '123 Furniture Blvd, Design District, NY 10001',
+    facebookUrl: '#',
+    instagramUrl: '#',
+    twitterUrl: '#',
+    youtubeUrl: '#',
+    copyrightText: 'Leading Edge Furniture. All Rights Reserved.'
+  }
 };
 
 export const INITIAL_SHIPPING_AREAS: ShippingArea[] = [

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom';
-import { LogOut, User, LayoutDashboard, Globe, Truck, FileText, Users, ShoppingCart, Mail, BookOpen, BarChart3 } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, Globe, Truck, FileText, Users, ShoppingCart, Mail, BookOpen, BarChart3, LayoutTemplate } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 const AdminLayout: React.FC = () => {
@@ -14,9 +14,7 @@ const AdminLayout: React.FC = () => {
   };
 
   const isActive = (path: string) => {
-    // Exact match for dashboard home
     if (path === '/admin') return location.pathname === '/admin';
-    // Prefix match for other sections
     return location.pathname.startsWith(path);
   };
 
@@ -58,6 +56,10 @@ const AdminLayout: React.FC = () => {
 
            <Link to="/admin/content" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/content') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
               <Globe size={20} /> Home Page
+           </Link>
+
+           <Link to="/admin/header-footer" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/header-footer') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+              <LayoutTemplate size={20} /> Header & Footer
            </Link>
 
            <Link to="/admin/catalogues" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/catalogues') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>

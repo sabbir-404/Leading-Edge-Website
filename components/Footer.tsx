@@ -1,8 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Twitter, Youtube, MapPin, Mail, Phone, Lock } from 'lucide-react';
+import { useShop } from '../context/ShopContext';
 
 const Footer: React.FC = () => {
+  const { siteConfig } = useShop();
+  const config = siteConfig.headerFooter || {
+      logoUrl: '',
+      phone: 'N/A',
+      email: 'contact@store.com',
+      address: 'Address not set',
+      facebookUrl: '#',
+      instagramUrl: '#',
+      twitterUrl: '#',
+      youtubeUrl: '#',
+      copyrightText: '© 2024 Store. All rights reserved.'
+  };
+
   return (
     <footer className="bg-primary text-white pt-16 pb-8">
       {/* Newsletter Section - Top of Footer */}
@@ -35,18 +49,26 @@ const Footer: React.FC = () => {
             Defining modern living with artistic furniture and sustainable design. Quality craftsmanship for the visionary home.
           </p>
           <div className="flex gap-4">
-            <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors">
-              <Facebook size={18} />
-            </a>
-            <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors">
-              <Instagram size={18} />
-            </a>
-            <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors">
-              <Twitter size={18} />
-            </a>
-            <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors">
-              <Youtube size={18} />
-            </a>
+            {config.facebookUrl && (
+                <a href={config.facebookUrl} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors">
+                <Facebook size={18} />
+                </a>
+            )}
+            {config.instagramUrl && (
+                <a href={config.instagramUrl} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors">
+                <Instagram size={18} />
+                </a>
+            )}
+            {config.twitterUrl && (
+                <a href={config.twitterUrl} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors">
+                <Twitter size={18} />
+                </a>
+            )}
+            {config.youtubeUrl && (
+                <a href={config.youtubeUrl} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors">
+                <Youtube size={18} />
+                </a>
+            )}
           </div>
         </div>
 
@@ -67,16 +89,16 @@ const Footer: React.FC = () => {
           <h4 className="font-bold text-lg mb-6">Contact Us</h4>
           <ul className="space-y-4 text-gray-400 text-sm">
             <li className="flex items-start gap-3">
-              <MapPin size={18} className="text-accent mt-0.5" />
-              <span>123 Furniture Blvd,<br/>Design District, NY 10001</span>
+              <MapPin size={18} className="text-accent mt-0.5 flex-shrink-0" />
+              <span>{config.address}</span>
             </li>
             <li className="flex items-center gap-3">
-              <Phone size={18} className="text-accent" />
-              <span>+1 (555) 123-4567</span>
+              <Phone size={18} className="text-accent flex-shrink-0" />
+              <span>{config.phone}</span>
             </li>
             <li className="flex items-center gap-3">
-              <Mail size={18} className="text-accent" />
-              <span>support@leadingedge.com</span>
+              <Mail size={18} className="text-accent flex-shrink-0" />
+              <span>{config.email}</span>
             </li>
           </ul>
         </div>
@@ -96,7 +118,7 @@ const Footer: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pt-8 text-center text-gray-500 text-sm flex justify-center items-center gap-2">
-        <p>&copy; {new Date().getFullYear()} Leading Edge Furniture. All Rights Reserved.</p>
+        <p>{config.copyrightText}</p>
         {/* Secret Admin Link */}
         <Link to="/admin" className="text-gray-800 hover:text-gray-700 transition-colors"><Lock size={12} /></Link>
       </div>

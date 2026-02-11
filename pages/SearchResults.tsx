@@ -4,6 +4,7 @@ import { useShop } from '../context/ShopContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Product } from '../types';
+import { CURRENCY } from '../constants';
 
 const SearchResults: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -16,7 +17,7 @@ const SearchResults: React.FC = () => {
     if (query) {
       const filtered = products.filter(p => 
         p.name.toLowerCase().includes(query.toLowerCase()) || 
-        p.category.toLowerCase().includes(query.toLowerCase()) ||
+        p.categories.some(c => c.toLowerCase().includes(query.toLowerCase())) ||
         p.description.toLowerCase().includes(query.toLowerCase())
       );
       setResults(filtered);
@@ -58,11 +59,11 @@ const SearchResults: React.FC = () => {
                 <div className="flex items-center gap-2 text-sm mt-1">
                     {product.onSale ? (
                       <>
-                        <span className="font-bold text-red-600">${product.salePrice}</span>
-                        <span className="text-gray-400 line-through">${product.price}</span>
+                        <span className="font-bold text-red-600">{CURRENCY}{product.salePrice}</span>
+                        <span className="text-gray-400 line-through">{CURRENCY}{product.price}</span>
                       </>
                     ) : (
-                      <span className="font-bold text-gray-900">${product.price}</span>
+                      <span className="font-bold text-gray-900">{CURRENCY}{product.price}</span>
                     )}
                 </div>
               </div>

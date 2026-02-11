@@ -23,8 +23,10 @@ import AdminOrders from './pages/AdminOrders';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminCatalogues from './pages/AdminCatalogues';
 import AdminNewsletter from './pages/AdminNewsletter';
+import AdminHeaderFooter from './pages/AdminHeaderFooter';
 import RequireAuth from './components/RequireAuth';
 import AdminLayout from './components/AdminLayout';
+import ToastContainer from './components/ToastContainer';
 import { ShopProvider } from './context/ShopContext';
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
@@ -43,7 +45,6 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
 const AnimatedRoutes = () => {
   const location = useLocation();
 
-  // Determine if we are in admin to avoid page transition for nested routes which causes flickering
   const isAdmin = location.pathname.startsWith('/admin') && location.pathname !== '/admin/login';
 
   return (
@@ -56,7 +57,6 @@ const AnimatedRoutes = () => {
         <Route path="/product/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
         <Route path="/checkout" element={<PageTransition><Checkout /></PageTransition>} />
         
-        {/* Static Pages replaced/augmented by DB pages, but keeping route mapping for legacy or specific layouts */}
         <Route path="/about" element={<PageTransition><About /></PageTransition>} />
         <Route path="/shipping" element={<PageTransition><Shipping /></PageTransition>} />
         <Route path="/returns" element={<PageTransition><Returns /></PageTransition>} />
@@ -65,7 +65,6 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
         <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
         
-        {/* Admin Nested Routes */}
         <Route path="/admin" element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}>
            <Route index element={<AdminDashboard />} />
            <Route path="products" element={<Admin />} />
@@ -77,6 +76,7 @@ const AnimatedRoutes = () => {
            <Route path="orders" element={<AdminOrders />} />
            <Route path="catalogues" element={<AdminCatalogues />} />
            <Route path="newsletter" element={<AdminNewsletter />} />
+           <Route path="header-footer" element={<AdminHeaderFooter />} />
         </Route>
       </Routes>
     </AnimatePresence>
@@ -88,6 +88,7 @@ const App: React.FC = () => {
     <ShopProvider>
       <Router>
         <AnimatedRoutes />
+        <ToastContainer />
       </Router>
     </ShopProvider>
   );

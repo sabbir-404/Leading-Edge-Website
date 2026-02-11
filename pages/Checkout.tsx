@@ -1,13 +1,18 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
-import { useCart } from '../context/CartContext';
+import { useShop } from '../context/ShopContext';
 import { Trash2, CreditCard, Lock } from 'lucide-react';
+import { CURRENCY } from '../constants';
 
 const Checkout: React.FC = () => {
-  const { cart, removeFromCart, cartTotal } = useCart();
-  const shipping = 29.99;
+  const { cart, removeFromCart, cartTotal, showToast } = useShop();
+  const shipping = 100;
   const tax = cartTotal * 0.08;
   const finalTotal = cartTotal + shipping + tax;
+
+  const handlePay = () => {
+      showToast('Order Placed Successfully!', 'success');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -58,8 +63,8 @@ const Checkout: React.FC = () => {
               </div>
             </div>
 
-            <button className="w-full bg-primary text-white py-4 rounded-xl font-medium hover:bg-gray-800 transition-all flex items-center justify-center gap-2 shadow-lg">
-              <Lock size={18} /> Pay ${finalTotal.toFixed(2)}
+            <button onClick={handlePay} className="w-full bg-primary text-white py-4 rounded-xl font-medium hover:bg-gray-800 transition-all flex items-center justify-center gap-2 shadow-lg">
+              <Lock size={18} /> Pay {CURRENCY}{finalTotal.toFixed(2)}
             </button>
           </div>
 
@@ -78,7 +83,7 @@ const Checkout: React.FC = () => {
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-primary">{item.name}</h4>
                         <p className="text-xs text-gray-500 mb-1">Qty: {item.quantity}</p>
-                        <p className="text-sm font-semibold">${item.price}</p>
+                        <p className="text-sm font-semibold">{CURRENCY}{item.price}</p>
                       </div>
                       <button 
                         onClick={() => removeFromCart(item.id)}
@@ -94,19 +99,19 @@ const Checkout: React.FC = () => {
               <div className="space-y-2 border-t border-gray-100 pt-4 text-sm">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span>{CURRENCY}{cartTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
-                  <span>${shipping.toFixed(2)}</span>
+                  <span>{CURRENCY}{shipping.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Tax (8%)</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>{CURRENCY}{tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-100 mt-2">
                   <span>Total</span>
-                  <span>${finalTotal.toFixed(2)}</span>
+                  <span>{CURRENCY}{finalTotal.toFixed(2)}</span>
                 </div>
               </div>
             </div>
