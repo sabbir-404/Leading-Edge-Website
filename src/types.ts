@@ -187,11 +187,30 @@ export interface HeaderFooterConfig {
   copyrightText: string;
 }
 
+export interface Brand {
+  id: string;
+  name: string;
+  logo: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  coverImage: string;
+  images: string[];
+  client?: string;
+  date?: string;
+}
+
 export interface SiteConfig {
   heroSlides: HeroSlide[];
   homeSections: HomeSection[];
   catalogues: Catalogue[];
   headerFooter: HeaderFooterConfig;
+  brands: Brand[];
+  showBrandsSection: boolean;
+  showProjectsSection: boolean;
 }
 
 export interface ToastMessage {

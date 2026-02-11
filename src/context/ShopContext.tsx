@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue, ToastMessage, Category } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_USERS, MOCK_ORDERS, MOCK_STATS, INITIAL_CATEGORIES } from '../constants';
+import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue, ToastMessage, Category, Project } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_USERS, MOCK_ORDERS, MOCK_STATS, INITIAL_CATEGORIES, INITIAL_PROJECTS } from '../constants';
 
 interface ShopContextType {
   products: Product[];
   categories: Category[];
+  projects: Project[];
   cart: CartItem[];
   user: User | null;
   users: User[]; 
@@ -43,6 +44,11 @@ interface ShopContextType {
   updateCategory: (category: Category) => void;
   deleteCategory: (categoryId: string) => void;
 
+  // Project Actions
+  addProject: (project: Project) => void;
+  updateProject: (project: Project) => void;
+  deleteProject: (projectId: string) => void;
+
   updateSiteConfig: (config: SiteConfig) => void;
   
   // Catalogue Actions
@@ -80,6 +86,7 @@ const ShopContext = createContext<ShopContextType | undefined>(undefined);
 export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [user, setUser] = useState<User | null>(null);
   
@@ -243,6 +250,22 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCategories(prev => prev.map(c => c.parentId === categoryId ? { ...c, parentId: null } : c));
     showToast('Category deleted', 'info');
   };
+
+  // Project Actions
+  const addProject = (project: Project) => {
+    setProjects(prev => [...prev, project]);
+    showToast('Project added', 'success');
+  };
+
+  const updateProject = (project: Project) => {
+    setProjects(prev => prev.map(p => p.id === project.id ? project : p));
+    showToast('Project updated', 'success');
+  };
+
+  const deleteProject = (projectId: string) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    showToast('Project deleted', 'info');
+  };
   
   const updateSiteConfig = (config: SiteConfig) => {
     setSiteConfig(config);
@@ -318,12 +341,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <ShopContext.Provider value={{ 
-      products, categories, cart, user, users, orders, siteConfig, customPages, shippingAreas, shippingMethods,
+      products, categories, projects, cart, user, users, orders, siteConfig, customPages, shippingAreas, shippingMethods,
       dashboardStats, newsletters, toasts,
       addToCart, removeFromCart, updateQuantity, clearCart, 
       login, logout, 
       addProduct, updateProduct, deleteProduct, deleteProductsBulk, updateProductsStatusBulk,
       addCategory, updateCategory, deleteCategory,
+      addProject, updateProject, deleteProject,
       updateSiteConfig,
       addCatalogue, updateCatalogue, deleteCatalogue,
       addPage, updatePage, deletePage,

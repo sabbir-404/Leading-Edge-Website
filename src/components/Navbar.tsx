@@ -129,17 +129,17 @@ const Navbar: React.FC = () => {
              />
           </div>
 
-          <div className="flex-1 max-w-xl mx-2 md:mx-8 relative z-50" ref={searchRef}>
-            <div className="relative group">
+          <div className="flex-1 mx-2 md:mx-8 relative z-50 flex justify-end md:justify-center" ref={searchRef}>
+            <div className="relative group w-full max-w-[200px] md:max-w-md">
               <input 
                 type="text" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchSubmit}
                 placeholder="Search..." 
-                className="w-full bg-gray-50 border border-gray-200 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                className={`w-full bg-gray-50 border border-gray-200 rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all duration-300 ${searchQuery ? 'md:w-[500px]' : 'md:focus:w-[500px]'} shadow-sm`}
               />
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-accent transition-colors" />
+              <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-accent transition-colors" />
             </div>
 
             {/* Search Dropdown */}
@@ -149,7 +149,7 @@ const Navbar: React.FC = () => {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden"
+                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden w-full md:w-[500px] mx-auto"
                 >
                   {searchResults.length > 0 ? (
                     <ul>
@@ -430,6 +430,19 @@ const Navbar: React.FC = () => {
                       </AnimatePresence>
                     </div>
                   ))}
+                  
+                  {/* Link to Projects Gallery */}
+                  <div className="border-b border-gray-800/50 pb-2">
+                      <div className="flex items-center justify-between">
+                        <Link 
+                          to="/projects"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="text-lg font-bold tracking-wider uppercase flex-1 py-2 text-gray-300"
+                        >
+                          Our Projects
+                        </Link>
+                      </div>
+                  </div>
                 </div>
 
                 <div className="mt-12 pt-8 border-t border-gray-800">

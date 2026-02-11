@@ -1,4 +1,4 @@
-import { Product, Category, Catalogue, SiteConfig, ShippingArea, ShippingMethod, CustomPage, User, Order, DashboardStats } from './types';
+import { Product, Category, Catalogue, SiteConfig, ShippingArea, ShippingMethod, CustomPage, User, Order, DashboardStats, Brand, Project } from './types';
 
 export const CURRENCY = '৳';
 
@@ -112,6 +112,36 @@ export const INITIAL_PRODUCTS = [
   ...generateProducts('Hardware', 12, 400),
 ];
 
+export const INITIAL_BRANDS: Brand[] = [
+  { id: 'b1', name: 'Brand A', logo: 'https://via.placeholder.com/150x80?text=Brand+A' },
+  { id: 'b2', name: 'Brand B', logo: 'https://via.placeholder.com/150x80?text=Brand+B' },
+  { id: 'b3', name: 'Brand C', logo: 'https://via.placeholder.com/150x80?text=Brand+C' },
+  { id: 'b4', name: 'Brand D', logo: 'https://via.placeholder.com/150x80?text=Brand+D' },
+  { id: 'b5', name: 'Brand E', logo: 'https://via.placeholder.com/150x80?text=Brand+E' },
+  { id: 'b6', name: 'Brand F', logo: 'https://via.placeholder.com/150x80?text=Brand+F' },
+];
+
+export const INITIAL_PROJECTS: Project[] = [
+  {
+    id: 'proj-1',
+    title: 'Luxury Villa Gulshan',
+    coverImage: 'https://picsum.photos/seed/proj1/800/600',
+    description: 'A complete interior solution for a 5000 sqft luxury villa in Gulshan 2. Focusing on modern minimalist aesthetics with premium Italian furniture.',
+    images: ['https://picsum.photos/seed/proj1/800/600', 'https://picsum.photos/seed/proj1a/800/600', 'https://picsum.photos/seed/proj1b/800/600'],
+    client: 'Mr. Rahman',
+    date: '2023-11-15'
+  },
+  {
+    id: 'proj-2',
+    title: 'Corporate Office Banani',
+    coverImage: 'https://picsum.photos/seed/proj2/800/600',
+    description: 'Open plan office design for a leading tech startup. Ergonomic seating and smart lighting solutions provided.',
+    images: ['https://picsum.photos/seed/proj2/800/600', 'https://picsum.photos/seed/proj2a/800/600'],
+    client: 'TechEdge Ltd',
+    date: '2023-08-20'
+  }
+];
+
 export const INITIAL_SITE_CONFIG: SiteConfig = {
   heroSlides: HERO_SLIDES,
   homeSections: [
@@ -129,7 +159,10 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
     twitterUrl: '#',
     youtubeUrl: '#',
     copyrightText: 'Leading Edge Furniture. All Rights Reserved.'
-  }
+  },
+  brands: INITIAL_BRANDS,
+  showBrandsSection: true,
+  showProjectsSection: true
 };
 
 export const INITIAL_SHIPPING_AREAS: ShippingArea[] = [

@@ -6,6 +6,8 @@ import ProductDetails from './pages/ProductDetails';
 import CategoryGallery from './pages/CategoryGallery';
 import SearchResults from './pages/SearchResults';
 import CatalogueViewer from './pages/CatalogueViewer';
+import ProjectsGallery from './pages/ProjectsGallery';
+import ProjectDetails from './pages/ProjectDetails';
 import Checkout from './pages/Checkout';
 import About from './pages/About';
 import Shipping from './pages/Shipping';
@@ -16,6 +18,7 @@ import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import AdminProductEditor from './pages/AdminProductEditor';
 import AdminCategories from './pages/AdminCategories';
+import AdminProjects from './pages/AdminProjects';
 import AdminContent from './pages/AdminContent';
 import AdminShipping from './pages/AdminShipping';
 import AdminPages from './pages/AdminPages';
@@ -28,6 +31,7 @@ import AdminHeaderFooter from './pages/AdminHeaderFooter';
 import RequireAuth from './components/RequireAuth';
 import AdminLayout from './components/AdminLayout';
 import ToastContainer from './components/ToastContainer';
+import FloatingContact from './components/FloatingContact';
 import { ShopProvider } from './context/ShopContext';
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
@@ -56,6 +60,8 @@ const AnimatedRoutes = () => {
         <Route path="/search" element={<PageTransition><SearchResults /></PageTransition>} />
         <Route path="/catalogue/:id" element={<PageTransition><CatalogueViewer /></PageTransition>} />
         <Route path="/product/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
+        <Route path="/projects" element={<PageTransition><ProjectsGallery /></PageTransition>} />
+        <Route path="/projects/:id" element={<PageTransition><ProjectDetails /></PageTransition>} />
         <Route path="/checkout" element={<PageTransition><Checkout /></PageTransition>} />
         
         <Route path="/about" element={<PageTransition><About /></PageTransition>} />
@@ -71,6 +77,7 @@ const AnimatedRoutes = () => {
            <Route path="products" element={<Admin />} />
            <Route path="product/:id" element={<AdminProductEditor />} />
            <Route path="categories" element={<AdminCategories />} />
+           <Route path="projects" element={<AdminProjects />} />
            <Route path="content" element={<AdminContent />} />
            <Route path="pages" element={<AdminPages />} />
            <Route path="shipping" element={<AdminShipping />} />
@@ -90,6 +97,7 @@ const App: React.FC = () => {
     <ShopProvider>
       <Router>
         <AnimatedRoutes />
+        <FloatingContact />
         <ToastContainer />
       </Router>
     </ShopProvider>

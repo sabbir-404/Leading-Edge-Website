@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom';
-import { LogOut, User, LayoutDashboard, Globe, Truck, FileText, Users, ShoppingCart, Mail, BookOpen, BarChart3, LayoutTemplate, Layers } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, Globe, Truck, FileText, Users, ShoppingCart, Mail, BookOpen, BarChart3, LayoutTemplate, Layers, Briefcase } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 const AdminLayout: React.FC = () => {
@@ -48,6 +48,10 @@ const AdminLayout: React.FC = () => {
               <Layers size={20} /> Categories
            </Link>
            
+           <Link to="/admin/projects" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/projects') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+              <Briefcase size={20} /> Projects
+           </Link>
+
            <Link to="/admin/orders" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/orders') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
               <ShoppingCart size={20} /> Orders
            </Link>

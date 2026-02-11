@@ -3,6 +3,8 @@ import Navbar from '../components/Navbar';
 import HeroSlider from '../components/HeroSlider';
 import CategoryGrid from '../components/CategoryGrid';
 import ProductSlider from '../components/ProductSlider';
+import ProjectSlider from '../components/ProjectSlider';
+import BrandSlider from '../components/BrandSlider';
 import CatalogueSlider from '../components/CatalogueSlider';
 import Footer from '../components/Footer';
 import { useShop } from '../context/ShopContext';
@@ -24,7 +26,7 @@ const Home: React.FC = () => {
           <HeroSlider />
         </section>
 
-        {/* Sale Section (Static for now, could be dynamic too) */}
+        {/* Sale Section */}
         {saleProducts.length > 0 && (
           <div className="bg-red-50 mt-8 relative">
              <div className="absolute top-12 left-4 md:left-auto md:right-12 max-w-7xl mx-auto w-full z-10 pointer-events-none">
@@ -73,6 +75,12 @@ const Home: React.FC = () => {
             );
           })}
         </div>
+
+        {/* New Projects Section */}
+        <ProjectSlider />
+
+        {/* New Brands Section */}
+        <BrandSlider />
 
         {/* Catalogue Slider */}
         <CatalogueSlider />
