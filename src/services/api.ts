@@ -50,6 +50,19 @@ export const api = {
       headers
   }).then(handleResponse),
   
+  // Users
+  getUsers: () => fetch(`${API_URL}/users`, { headers }).then(handleResponse),
+  createUser: (user: any) => fetch(`${API_URL}/users`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(user)
+  }).then(handleResponse),
+  updateUser: (user: any) => fetch(`${API_URL}/users/${user.id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(user)
+  }).then(handleResponse),
+
   // Orders
   createOrder: (orderData: any) => fetch(`${API_URL}/orders`, {
     method: 'POST',
@@ -57,7 +70,7 @@ export const api = {
     body: JSON.stringify(orderData)
   }).then(handleResponse),
 
-  // Auth (Simplified for demo)
+  // Auth
   login: (email: string, password?: string) => fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers,

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
@@ -14,13 +15,12 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
     setError('');
     
-    // Mock admin validation
-    if (email.includes('admin')) {
-      login(email);
-      navigate('/admin');
-    } else {
-      setError('Invalid admin credentials');
-    }
+    // We pass credentials to context login which calls API
+    login(email, password);
+    // Since login is async void in context, we assume if it fails it shows toast.
+    // Ideally we'd await it, but context interface returns void.
+    // We'll redirect to admin, RequireAuth will kick back if login failed.
+    setTimeout(() => navigate('/admin'), 500);
   };
 
   return (

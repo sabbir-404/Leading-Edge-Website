@@ -25,7 +25,7 @@ const dbConfig = {
 
 const pool = mysql.createPool(dbConfig);
 
-// Startup Check
+// Startup Check & Seed
 (async () => {
   try {
     const connection = await pool.getConnection();
@@ -38,6 +38,18 @@ const pool = mysql.createPool(dbConfig);
         console.log('⚠️ extra_data column missing. Attempting to add...');
         await connection.query('ALTER TABLE products ADD COLUMN extra_data LONGTEXT');
         console.log('✅ extra_data column added.');
+    }
+
+    // Seed Admin User if table is empty
+    try {
+        const [users] = await connection.query('SELECT * FROM users LIMIT 1');
+        if (users.length === 0) {
+            // Default Admin: admin@leadingedge.com / admin123
+            await connection.query("INSERT INTO users (id, name, email, password_hash, role, join_date) VALUES ('u-admin', 'Admin User', 'admin@leadingedge.com', 'admin123', 'admin', NOW())");
+            console.log('✅ Default admin user created (admin@leadingedge.com / admin123)');
+        }
+    } catch (e) {
+        console.log('⚠️ Error checking users table: ' + e.message);
     }
 
     connection.release();
@@ -265,6 +277,63 @@ app.delete('/api/categories/:id', async (req, res) => {
     }
 });
 
+// --- USER ROUTES ---
+
+// Get Users
+app.get('/api/users', async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT id, name, email, role, phone, address, join_date FROM users');
+        const users = rows.map(r => ({
+            id: r.id,
+            name: r.name,
+            email: r.email,
+            role: r.role,
+            phone: r.phone,
+            address: r.address,
+            joinDate: r.join_date
+        }));
+        res.json(users);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Create User
+app.post('/api/users', async (req, res) => {
+    try {
+        const u = req.body;
+        // In real app, hash password here. Storing plain for demo compatibility
+        await pool.query(
+            'INSERT INTO users (id, name, email, password_hash, role, phone, address, join_date) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+            [u.id, u.name, u.email, u.password || '123456', u.role, u.phone, u.address]
+        );
+        res.status(201).json({ message: 'User created' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Update User
+app.put('/api/users/:id', async (req, res) => {
+    try {
+        const u = req.body;
+        if (u.password) {
+             await pool.query(
+                'UPDATE users SET name=?, email=?, password_hash=?, role=?, phone=?, address=? WHERE id=?',
+                [u.name, u.email, u.password, u.role, u.phone, u.address, req.params.id]
+            );
+        } else {
+             await pool.query(
+                'UPDATE users SET name=?, email=?, role=?, phone=?, address=? WHERE id=?',
+                [u.name, u.email, u.role, u.phone, u.address, req.params.id]
+            );
+        }
+        res.json({ message: 'User updated' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // --- ORDER ROUTES ---
 
 app.post('/api/orders', async (req, res) => {
@@ -288,16 +357,29 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Auth Login (Mock)
-app.post('/api/auth/login', (req, res) => {
-    const { email } = req.body;
-    res.json({
-        id: 'u-' + Date.now(),
-        name: email.split('@')[0],
-        email: email,
-        role: email.includes('admin') ? 'admin' : 'customer',
-        joinDate: new Date().toISOString()
-    });
+// Auth Login
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (rows.length > 0) {
+            const user = rows[0];
+            // Verify password (plain text check for demo)
+            if (user.password_hash === password) { 
+                 res.json({
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    joinDate: user.join_date
+                });
+                return;
+            }
+        }
+        res.status(401).json({ message: 'Invalid credentials' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.listen(PORT, () => {

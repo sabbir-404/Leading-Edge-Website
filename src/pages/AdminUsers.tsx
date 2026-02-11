@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
-import { User, Order } from '../types';
-import { Search, Mail, Phone, MapPin, Package, UserPlus, Edit, Save, X } from 'lucide-react';
+import { User } from '../types';
+import { Search, Mail, Phone, MapPin, Package, UserPlus, Edit, Save, X, Lock } from 'lucide-react';
 import { CURRENCY } from '../constants';
 
 const AdminUsers: React.FC = () => {
@@ -13,7 +14,7 @@ const AdminUsers: React.FC = () => {
   const [mode, setMode] = useState<'view' | 'edit' | 'add'>('view');
   
   // Form State
-  const [formData, setFormData] = useState<User>({id:'', name:'', email:'', role:'customer', joinDate: '', phone: '', address: ''});
+  const [formData, setFormData] = useState<User>({id:'', name:'', email:'', role:'customer', joinDate: '', phone: '', address: '', password: ''});
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -29,7 +30,7 @@ const AdminUsers: React.FC = () => {
 
   const handleStartEdit = () => {
     if (selectedUser) {
-        setFormData(selectedUser);
+        setFormData({ ...selectedUser, password: '' }); // Clear password for edit
         setMode('edit');
     }
   };
@@ -42,7 +43,8 @@ const AdminUsers: React.FC = () => {
           role: 'customer',
           joinDate: new Date().toISOString().split('T')[0],
           phone: '',
-          address: ''
+          address: '',
+          password: ''
       });
       setMode('add');
       setSelectedUser(null);
@@ -50,6 +52,7 @@ const AdminUsers: React.FC = () => {
 
   const handleSave = () => {
       if (mode === 'add') {
+          if (!formData.password) return alert('Password is required for new users');
           const newUser = { ...formData, id: `u-${Date.now()}` };
           addUser(newUser);
           setSelectedUser(newUser);
@@ -112,6 +115,16 @@ const AdminUsers: React.FC = () => {
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
                         <input className="w-full border p-3 rounded" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
+                        <input 
+                            type="password"
+                            className="w-full border p-3 rounded" 
+                            value={formData.password || ''} 
+                            onChange={e => setFormData({...formData, password: e.target.value})} 
+                            placeholder={mode === 'edit' ? "Leave blank to keep unchanged" : "Create a password"}
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-1">Phone</label>

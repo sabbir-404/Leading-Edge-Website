@@ -25,7 +25,7 @@ interface ShopContextType {
   clearCart: () => void;
   cartTotal: number;
   itemCount: number;
-  login: (email: string) => void;
+  login: (email: string, password?: string) => void;
   logout: () => void;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
@@ -87,13 +87,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [prodData, catData] = await Promise.all([
+        const [prodData, catData, userData] = await Promise.all([
           api.getProducts().catch(err => { console.error('Products fetch error:', err); return []; }), 
-          api.getCategories().catch(err => { console.error('Categories fetch error:', err); return []; })
+          api.getCategories().catch(err => { console.error('Categories fetch error:', err); return []; }),
+          api.getUsers().catch(err => { console.error('Users fetch error:', err); return []; })
         ]);
 
         if (prodData.length > 0) setProducts(prodData);
         if (catData.length > 0) setCategories(catData);
+        if (userData.length > 0) setUsers(userData);
         
       } catch (error) {
         console.error("Failed to fetch initial data", error);
@@ -110,7 +112,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => dismissToast(id), 5000); // Increased duration to read errors
+    setTimeout(() => dismissToast(id), 5000); 
   };
 
   const dismissToast = (id: string) => {
@@ -180,22 +182,25 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Auth Logic
-  const login = async (email: string) => {
+  const login = async (email: string, password?: string) => {
     try {
-      const userData = await api.login(email);
+      const userData = await api.login(email, password);
       setUser(userData);
       showToast('Logged in successfully', 'success');
-    } catch (e) {
-      // Fallback for demo
-      const newUser: User = { 
-        id: `u-${Date.now()}`, 
-        name: email.split('@')[0], 
-        email, 
-        role: email.includes('admin') ? 'admin' : 'customer',
-        joinDate: new Date().toISOString().split('T')[0]
-      };
-      setUser(newUser);
-      showToast('Logged in (Local Mode)', 'info');
+    } catch (e: any) {
+      showToast(e.message || 'Login failed', 'error');
+      // For Demo Fallback if server fails
+      if(e.message === 'Failed to fetch') {
+          const newUser: User = { 
+            id: `u-${Date.now()}`, 
+            name: email.split('@')[0], 
+            email, 
+            role: email.includes('admin') ? 'admin' : 'customer',
+            joinDate: new Date().toISOString().split('T')[0]
+          };
+          setUser(newUser);
+          showToast('Logged in (Local Mode)', 'info');
+      }
     }
   };
 
@@ -209,14 +214,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addProduct = async (product: Product) => {
     try {
         const newProduct = { ...product, id: product.id || `PROD-${Date.now()}` };
-        // Optimistic Update
         setProducts(prev => [...prev, newProduct]);
         await api.createProduct(newProduct);
         showToast('Product saved to database', 'success');
     } catch (e: any) {
         showToast(`Failed to save: ${e.message}`, 'error');
-        console.error("Add Product Error:", e);
-        // We could revert optimistic update here, but we'll leave it for now so data isn't lost in UI
     }
   };
   
@@ -242,7 +244,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const deleteProductsBulk = (productIds: string[]) => {
     setProducts(prev => prev.filter(p => !productIds.includes(p.id)));
-    // Ideally loop and call API or bulk API
     productIds.forEach(id => api.deleteProduct(id).catch(console.error));
     showToast(`${productIds.length} products deleted`, 'info');
   };
@@ -297,11 +298,32 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const found = newCats.find(c => c.id === id);
             if (found) {
                 found.order = index;
-                api.updateCategory(found).catch(console.error); // Sync order to backend
+                api.updateCategory(found).catch(console.error); 
             }
         });
         return newCats;
     });
+  };
+
+  // User Actions
+  const addUser = async (user: User) => {
+    try {
+      await api.createUser(user);
+      setUsers(prev => [...prev, user]);
+      showToast('User created successfully', 'success');
+    } catch (e: any) {
+      showToast(`Failed to create user: ${e.message}`, 'error');
+    }
+  };
+
+  const updateUser = async (user: User) => {
+    try {
+      await api.updateUser(user);
+      setUsers(prev => prev.map(u => u.id === user.id ? user : u));
+      showToast('User updated successfully', 'success');
+    } catch (e: any) {
+      showToast(`Failed to update user: ${e.message}`, 'error');
+    }
   };
 
   // Projects (Local State Only for now)
@@ -354,15 +376,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateShippingAreas = (areas: ShippingArea[]) => setShippingAreas(areas);
   const updateShippingMethods = (methods: ShippingMethod[]) => setShippingMethods(methods);
-
-  const addUser = (user: User) => {
-    setUsers(prev => [...prev, user]);
-    showToast('User added', 'success');
-  };
-  const updateUser = (user: User) => {
-    setUsers(prev => prev.map(u => u.id === user.id ? user : u));
-    showToast('User updated', 'success');
-  };
 
   const updateOrder = (order: Order) => {
     setOrders(prev => prev.map(o => o.id === order.id ? order : o));
