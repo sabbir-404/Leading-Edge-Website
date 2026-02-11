@@ -20,6 +20,9 @@ import AdminShipping from './pages/AdminShipping';
 import AdminPages from './pages/AdminPages';
 import AdminUsers from './pages/AdminUsers';
 import AdminOrders from './pages/AdminOrders';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminCatalogues from './pages/AdminCatalogues';
+import AdminNewsletter from './pages/AdminNewsletter';
 import RequireAuth from './components/RequireAuth';
 import AdminLayout from './components/AdminLayout';
 import { ShopProvider } from './context/ShopContext';
@@ -64,13 +67,16 @@ const AnimatedRoutes = () => {
         
         {/* Admin Nested Routes */}
         <Route path="/admin" element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}>
-           <Route index element={<Admin />} />
+           <Route index element={<AdminDashboard />} />
+           <Route path="products" element={<Admin />} />
            <Route path="product/:id" element={<AdminProductEditor />} />
            <Route path="content" element={<AdminContent />} />
            <Route path="pages" element={<AdminPages />} />
            <Route path="shipping" element={<AdminShipping />} />
            <Route path="users" element={<AdminUsers />} />
            <Route path="orders" element={<AdminOrders />} />
+           <Route path="catalogues" element={<AdminCatalogues />} />
+           <Route path="newsletter" element={<AdminNewsletter />} />
         </Route>
       </Routes>
     </AnimatePresence>

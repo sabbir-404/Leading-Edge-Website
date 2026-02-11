@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom';
-import { LogOut, User, LayoutDashboard, Globe, Truck, FileText, Users, ShoppingCart } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, Globe, Truck, FileText, Users, ShoppingCart, Mail, BookOpen, BarChart3 } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 const AdminLayout: React.FC = () => {
@@ -14,7 +14,9 @@ const AdminLayout: React.FC = () => {
   };
 
   const isActive = (path: string) => {
+    // Exact match for dashboard home
     if (path === '/admin') return location.pathname === '/admin';
+    // Prefix match for other sections
     return location.pathname.startsWith(path);
   };
 
@@ -32,9 +34,15 @@ const AdminLayout: React.FC = () => {
         </div>
 
         <div className="flex-1 py-6 px-3 space-y-1">
-           <p className="px-3 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Management</p>
+           <p className="px-3 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Overview</p>
            
            <Link to="/admin" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+              <BarChart3 size={20} /> Dashboard
+           </Link>
+
+           <p className="px-3 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-6">Management</p>
+           
+           <Link to="/admin/products" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/products') || isActive('/admin/product') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
               <LayoutDashboard size={20} /> Products
            </Link>
            
@@ -46,14 +54,22 @@ const AdminLayout: React.FC = () => {
               <Users size={20} /> Users & Roles
            </Link>
 
-           <p className="px-3 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-6">Content & Config</p>
+           <p className="px-3 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-6">Marketing & Content</p>
 
            <Link to="/admin/content" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/content') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
               <Globe size={20} /> Home Page
            </Link>
 
+           <Link to="/admin/catalogues" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/catalogues') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+              <BookOpen size={20} /> Catalogues
+           </Link>
+
            <Link to="/admin/pages" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/pages') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
               <FileText size={20} /> Pages
+           </Link>
+
+           <Link to="/admin/newsletter" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/newsletter') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+              <Mail size={20} /> Newsletter
            </Link>
 
            <Link to="/admin/shipping" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/shipping') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
@@ -85,7 +101,7 @@ const AdminLayout: React.FC = () => {
          {/* Top Admin Navbar */}
          <header className="h-16 bg-white shadow-sm border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-10">
              <h2 className="font-bold text-gray-700 capitalize">
-                {location.pathname.split('/')[2]?.replace('-', ' ') || 'Dashboard'}
+                {location.pathname === '/admin' ? 'Dashboard' : location.pathname.split('/')[2]?.replace('-', ' ')}
              </h2>
              <div className="flex items-center gap-4">
                <Link to="/" className="text-sm text-gray-500 hover:text-accent flex items-center gap-1">View Store <Globe size={14}/></Link>

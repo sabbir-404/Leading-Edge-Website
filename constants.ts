@@ -1,4 +1,4 @@
-import { Product, Category, Catalogue, SiteConfig, ShippingArea, ShippingMethod, CustomPage, User, Order } from './types';
+import { Product, Category, Catalogue, SiteConfig, ShippingArea, ShippingMethod, CustomPage, User, Order, DashboardStats } from './types';
 
 export const CURRENCY = '৳';
 
@@ -196,3 +196,21 @@ export const MOCK_ORDERS: Order[] = [
     paymentStatus: 'Unpaid'
   }
 ];
+
+export const MOCK_STATS: DashboardStats = {
+  totalOrdersMonth: 145,
+  totalVisitsMonth: 3240,
+  revenueMonth: 450000,
+  trendingProducts: [
+    { productId: 'Furniture-100', name: 'Furniture Model 1', sales: 45 },
+    { productId: 'Light-200', name: 'Light Model 1', sales: 32 },
+    { productId: 'Kitchenware-300', name: 'Kitchenware Model 1', sales: 28 },
+    { productId: 'Hardware-400', name: 'Hardware Model 1', sales: 15 },
+  ],
+  recentActivity: [
+    'Order #ORD-1005 placed by Jamal',
+    'New User Registered: Salma Begum',
+    'Product "Sofa" low stock warning',
+    'Newsletter "Eid Sale" sent successfully'
+  ]
+};

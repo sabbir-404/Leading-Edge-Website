@@ -1,17 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_USERS, MOCK_ORDERS } from '../constants';
+import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_USERS, MOCK_ORDERS, MOCK_STATS } from '../constants';
 
 interface ShopContextType {
   products: Product[];
   cart: CartItem[];
   user: User | null;
-  users: User[]; // Admin view of all users
-  orders: Order[]; // Admin view of all orders (for this demo)
+  users: User[]; 
+  orders: Order[]; 
   siteConfig: SiteConfig;
   customPages: CustomPage[];
   shippingAreas: ShippingArea[];
   shippingMethods: ShippingMethod[];
+  
+  // Dashboard & Misc
+  dashboardStats: DashboardStats;
+  newsletters: NewsletterCampaign[];
   
   // Cart Actions
   addToCart: (product: Product, variation?: any) => void;
@@ -34,6 +38,11 @@ interface ShopContextType {
   
   updateSiteConfig: (config: SiteConfig) => void;
   
+  // Catalogue Actions
+  addCatalogue: (catalogue: Catalogue) => void;
+  updateCatalogue: (catalogue: Catalogue) => void;
+  deleteCatalogue: (catalogueId: string) => void;
+
   // Page Actions
   addPage: (page: CustomPage) => void;
   updatePage: (page: CustomPage) => void;
@@ -49,6 +58,10 @@ interface ShopContextType {
 
   // Order Actions
   updateOrder: (order: Order) => void;
+  createOrder: (order: Order) => void;
+
+  // Newsletter Actions
+  sendNewsletter: (campaign: NewsletterCampaign) => void;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -65,6 +78,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [customPages, setCustomPages] = useState<CustomPage[]>(INITIAL_PAGES);
   const [shippingAreas, setShippingAreas] = useState<ShippingArea[]>(INITIAL_SHIPPING_AREAS);
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>(INITIAL_SHIPPING_METHODS);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>(MOCK_STATS);
+  const [newsletters, setNewsletters] = useState<NewsletterCampaign[]>([]);
 
   // Cart Logic
   const addToCart = (product: Product, variation?: any) => {
@@ -158,7 +173,19 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const deleteProduct = (productId: string) => setProducts(prev => prev.filter(p => p.id !== productId));
   const deleteProductsBulk = (productIds: string[]) => setProducts(prev => prev.filter(p => !productIds.includes(p.id)));
   const updateProductsStatusBulk = (productIds: string[], isVisible: boolean) => setProducts(prev => prev.map(p => productIds.includes(p.id) ? { ...p, isVisible } : p));
+  
   const updateSiteConfig = (config: SiteConfig) => setSiteConfig(config);
+
+  // Catalogue Actions
+  const addCatalogue = (catalogue: Catalogue) => {
+    setSiteConfig(prev => ({ ...prev, catalogues: [...prev.catalogues, catalogue] }));
+  };
+  const updateCatalogue = (catalogue: Catalogue) => {
+    setSiteConfig(prev => ({ ...prev, catalogues: prev.catalogues.map(c => c.id === catalogue.id ? catalogue : c) }));
+  };
+  const deleteCatalogue = (catalogueId: string) => {
+    setSiteConfig(prev => ({ ...prev, catalogues: prev.catalogues.filter(c => c.id !== catalogueId) }));
+  };
   
   // Page Actions
   const addPage = (page: CustomPage) => setCustomPages(prev => [...prev, page]);
@@ -175,18 +202,33 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Order Actions
   const updateOrder = (order: Order) => setOrders(prev => prev.map(o => o.id === order.id ? order : o));
+  const createOrder = (order: Order) => {
+    setOrders(prev => [order, ...prev]);
+    // Update Dashboard Stats (mock)
+    setDashboardStats(prev => ({
+        ...prev,
+        totalOrdersMonth: prev.totalOrdersMonth + 1,
+        revenueMonth: prev.revenueMonth + order.total
+    }));
+  };
+
+  // Newsletter Actions
+  const sendNewsletter = (campaign: NewsletterCampaign) => setNewsletters(prev => [campaign, ...prev]);
 
   return (
     <ShopContext.Provider value={{ 
       products, cart, user, users, orders, siteConfig, customPages, shippingAreas, shippingMethods,
+      dashboardStats, newsletters,
       addToCart, removeFromCart, updateQuantity, clearCart, 
       login, logout, 
       addProduct, updateProduct, deleteProduct, deleteProductsBulk, updateProductsStatusBulk,
       updateSiteConfig,
+      addCatalogue, updateCatalogue, deleteCatalogue,
       addPage, updatePage, deletePage,
       updateShippingAreas, updateShippingMethods,
       addUser, updateUser,
-      updateOrder,
+      updateOrder, createOrder,
+      sendNewsletter,
       cartTotal, itemCount 
     }}>
       {children}

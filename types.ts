@@ -154,9 +154,25 @@ export interface ShippingMethod {
   specificProductIds?: string[];
 }
 
+export interface NewsletterCampaign {
+  id: string;
+  subject: string;
+  content: string;
+  sentDate: string;
+  recipientCount: number;
+  status: 'Sent' | 'Draft';
+}
+
+export interface DashboardStats {
+  totalOrdersMonth: number;
+  totalVisitsMonth: number;
+  revenueMonth: number;
+  trendingProducts: { productId: string; name: string; sales: number }[];
+  recentActivity: string[];
+}
+
 export interface SiteConfig {
   heroSlides: HeroSlide[];
   homeSections: HomeSection[];
   catalogues: Catalogue[];
-  // Legacy about/shipping/returns removed in favor of CustomPage
 }
