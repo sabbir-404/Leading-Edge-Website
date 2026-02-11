@@ -108,7 +108,7 @@ const Navbar: React.FC = () => {
         <div className={`max-w-7xl mx-auto h-full flex items-center justify-between gap-4 transition-all duration-500 ease-in-out ${isSearchFocused ? 'px-2' : 'px-4'}`}>
           
           <button 
-            className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-primary"
+            className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-primary flex-shrink-0"
             onClick={() => setIsMenuOpen(true)}
           >
             <Menu size={24} />
@@ -123,8 +123,11 @@ const Navbar: React.FC = () => {
              />
           </div>
           
-          {/* Mobile Logo - Hidden as requested to increase search bar size */}
-           <div className="flex-shrink-0 cursor-pointer hidden" onClick={() => navigate('/')}>
+          {/* Mobile Logo - Hidden ONLY when search is focused */}
+           <div 
+             className={`flex-shrink-0 cursor-pointer md:hidden transition-all duration-300 ease-in-out overflow-hidden ${isSearchFocused ? 'w-0 opacity-0' : 'w-auto opacity-100'}`} 
+             onClick={() => navigate('/')}
+           >
              <img 
                src="/Logo/logo black.png" 
                alt="Leading Edge" 
@@ -420,41 +423,59 @@ const Navbar: React.FC = () => {
                   {/* Shop By Room */}
                   <div>
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Shop By Room</h3>
-                    <ul className="space-y-3">
+                    <ul className="space-y-1">
                       {navItems.slice(0, 6).map((item) => (
-                        <li key={item.id}>
-                          <Link 
-                            to={item.link}
-                            onClick={() => setIsMenuOpen(false)}
-                            className="flex items-center justify-between text-gray-700 font-medium py-1"
-                          >
-                            {item.label} <ChevronRight size={16} className="text-gray-300" />
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                        <li key={item.id} className="border-b border-gray-100 last:border-0">
+                          {item.subCategories.length > 0 ? (
+                            // Click toggles submenu
+                            <div 
+                              className="flex items-center justify-between py-3 cursor-pointer select-none"
+                              onClick={() => toggleMobileMenu(item.id)}
+                            >
+                              <span className={`font-medium ${mobileExpandedId === item.id ? 'text-accent' : 'text-gray-700'}`}>
+                                {item.label}
+                              </span>
+                              <ChevronDown 
+                                size={16} 
+                                className={`transition-transform duration-200 text-gray-400 ${mobileExpandedId === item.id ? 'rotate-180 text-accent' : ''}`} 
+                              />
+                            </div>
+                          ) : (
+                            // Direct link if no subcategories
+                            <Link 
+                              to={item.link}
+                              onClick={() => setIsMenuOpen(false)}
+                              className="flex items-center justify-between py-3 text-gray-700 font-medium"
+                            >
+                              {item.label} <ChevronRight size={16} className="text-gray-300" />
+                            </Link>
+                          )}
 
-                  {/* All Categories with Icons */}
-                  <div>
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">All Categories</h3>
-                    <ul className="space-y-3">
-                      {navItems.map((item) => (
-                        <li key={item.id}>
-                          <Link 
-                             to={item.link}
-                             onClick={() => setIsMenuOpen(false)}
-                             className="flex items-center gap-3 py-1"
-                          >
-                            {item.image ? (
-                                <img src={item.image} alt={item.label} className="w-8 h-8 rounded-full object-cover" />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500">
-                                    {item.label.substring(0, 2)}
-                                </div>
+                          {/* Mobile Submenu Accordion */}
+                          <AnimatePresence>
+                            {mobileExpandedId === item.id && item.subCategories.length > 0 && (
+                              <motion.div 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden bg-gray-50 rounded-lg mb-2"
+                              >
+                                <ul className="py-2 pl-4">
+                                  {item.subCategories.map((sub, idx) => (
+                                    <li key={idx}>
+                                      <Link 
+                                        to={sub.link}
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className="block py-2 text-sm text-gray-600 hover:text-accent border-l-2 border-transparent hover:border-accent pl-2"
+                                      >
+                                        {sub.label}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </motion.div>
                             )}
-                            <span className="text-gray-600">{item.label}</span>
-                          </Link>
+                          </AnimatePresence>
                         </li>
                       ))}
                     </ul>
