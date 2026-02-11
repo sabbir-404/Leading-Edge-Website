@@ -108,7 +108,7 @@ const ProductDetails: React.FC = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   key={mainImage}
-                  className="w-full bg-gray-100 aspect-[4/3] md:aspect-square rounded-lg overflow-hidden border border-gray-100 relative mb-4"
+                  className="w-full bg-gray-100 aspect-[4/3] md:h-[550px] md:aspect-auto rounded-lg overflow-hidden border border-gray-100 relative mb-4"
                 >
                   <img src={mainImage} alt={product.name} className="w-full h-full object-cover" />
                   {product.onSale && (

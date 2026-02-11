@@ -21,9 +21,6 @@ const Navbar: React.FC = () => {
   // Desktop Menu State
   const [hoveredMenuId, setHoveredMenuId] = useState<string | null>(null);
 
-  // Mobile Menu State
-  const [mobileExpandedId, setMobileExpandedId] = useState<string | null>(null);
-
   // Cart Toast State
   const [showCartToast, setShowCartToast] = useState(false);
   const prevItemCountRef = useRef(itemCount);
@@ -36,6 +33,7 @@ const Navbar: React.FC = () => {
       id: main.id,
       label: main.name,
       link: `/gallery/${main.name}`,
+      image: main.image,
       subCategories: categories
         .filter(sub => sub.parentId === main.id)
         .map(sub => ({
@@ -57,8 +55,6 @@ const Navbar: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchDropdown(false);
-        // Collapse the search bar animation if the user clicks outside and the query is empty
-        // or just always collapse on outside click to restore menu visibility
         setIsSearchFocused(false);
       }
     };
@@ -92,14 +88,6 @@ const Navbar: React.FC = () => {
       navigate('/profile');
     } else {
       navigate('/login');
-    }
-  };
-
-  const toggleMobileMenu = (id: string) => {
-    if (mobileExpandedId === id) {
-      setMobileExpandedId(null);
-    } else {
-      setMobileExpandedId(id);
     }
   };
 
@@ -378,110 +366,95 @@ const Navbar: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 bg-black/80 z-50 lg:hidden backdrop-blur-sm"
+              className="fixed inset-0 bg-black/50 z-50 lg:hidden"
             />
             <motion.div 
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.3 }}
-              className="fixed top-0 left-0 bottom-0 w-[85%] max-w-sm bg-[#111111] z-50 lg:hidden shadow-2xl overflow-y-auto text-white"
+              className="fixed top-0 left-0 bottom-0 w-[80%] max-w-sm bg-white z-50 lg:hidden shadow-xl overflow-y-auto"
             >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-8">
-                   <img 
-                     src="/Logo/logo black.png" 
-                     alt="Leading Edge" 
-                     className="h-10 w-auto object-contain invert brightness-0 saturate-100 filter contrast-200" 
-                   />
-                   <button onClick={() => setIsMenuOpen(false)} className="p-2 text-gray-400 hover:text-white">
-                     <X size={24} />
-                   </button>
-                </div>
+              <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h2 className="text-lg font-bold">Menu</h2>
+                <button onClick={() => setIsMenuOpen(false)} className="p-2 text-gray-500">
+                  <X size={24} />
+                </button>
+              </div>
 
-                <div className="space-y-4">
-                  {navItems.map((item) => (
-                    <div key={item.id} className="border-b border-gray-800/50 pb-2">
-                      <div className="flex items-center justify-between">
-                        <Link 
-                          to={item.link}
-                          onClick={() => setIsMenuOpen(false)}
-                          className={`text-lg font-bold tracking-wider uppercase flex-1 py-2 ${mobileExpandedId === item.id ? 'text-accent' : 'text-gray-300'}`}
-                        >
-                          {item.label}
-                        </Link>
-                        {item.subCategories.length > 0 && (
-                          <button 
-                            onClick={(e) => { e.preventDefault(); toggleMobileMenu(item.id); }}
-                            className={`p-2 transition-transform ${mobileExpandedId === item.id ? 'text-accent rotate-180' : 'text-gray-500'}`}
-                          >
-                            <ChevronDown size={20} />
-                          </button>
-                        )}
-                      </div>
-                      
-                      <AnimatePresence>
-                        {mobileExpandedId === item.id && item.subCategories.length > 0 && (
-                          <motion.div 
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <ul className="pl-4 py-2 space-y-3 border-l border-gray-800 ml-2">
-                              {item.subCategories.map((sub, idx) => (
-                                <li key={idx}>
-                                  <Link 
-                                    to={sub.link}
-                                    onClick={() => setIsMenuOpen(false)}
-                                    className="block text-sm text-gray-400 hover:text-white uppercase tracking-wide"
-                                  >
-                                    {sub.label}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+              <div className="p-4">
+                <div className="space-y-6">
+                  {/* User Section */}
+                  <div className="flex items-center gap-4 pb-6 border-b border-gray-100">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
+                      <User size={24} />
                     </div>
-                  ))}
-                  
-                  {/* Link to Projects Gallery */}
-                  <div className="border-b border-gray-800/50 pb-2">
-                      <div className="flex items-center justify-between">
-                        <Link 
-                          to="/projects"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="text-lg font-bold tracking-wider uppercase flex-1 py-2 text-gray-300"
-                        >
-                          Our Projects
-                        </Link>
-                      </div>
-                  </div>
-                </div>
-
-                <div className="mt-12 pt-8 border-t border-gray-800">
-                   <div className="flex flex-col gap-4">
+                    <div>
                       {user ? (
-                         <div className="flex items-center gap-3 text-gray-300">
-                            <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-accent">
-                               <User size={20} />
-                            </div>
-                            <div>
-                               <p className="font-bold">{user.name}</p>
-                               <button onClick={() => {logout(); setIsMenuOpen(false);}} className="text-xs text-red-500 font-medium uppercase tracking-wider mt-1">Logout</button>
-                            </div>
-                         </div>
+                         <>
+                          <p className="font-medium">{user.name}</p>
+                          <button onClick={() => {logout(); setIsMenuOpen(false);}} className="text-sm text-red-500 font-medium">Logout</button>
+                         </>
                       ) : (
-                         <div className="grid grid-cols-2 gap-4">
-                            <button onClick={() => {navigate('/login'); setIsMenuOpen(false);}} className="border border-gray-700 text-white py-3 rounded text-sm font-bold uppercase hover:bg-gray-800 transition-colors">Sign In</button>
-                            <button onClick={() => {navigate('/login'); setIsMenuOpen(false);}} className="bg-accent text-white py-3 rounded text-sm font-bold uppercase hover:bg-orange-600 transition-colors">Register</button>
-                         </div>
+                        <>
+                          <p className="font-medium">Welcome Guest</p>
+                          <button onClick={() => {navigate('/login'); setIsMenuOpen(false);}} className="text-sm text-accent font-medium">Sign In / Register</button>
+                        </>
                       )}
-                      
-                      <Link to="/" className="text-gray-500 text-sm hover:text-white mt-4 block">Contact Us</Link>
-                   </div>
+                    </div>
+                  </div>
+
+                  {/* Shop By Room */}
+                  <div>
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Shop By Room</h3>
+                    <ul className="space-y-3">
+                      {navItems.slice(0, 6).map((item) => (
+                        <li key={item.id}>
+                          <Link 
+                            to={item.link}
+                            onClick={() => setIsMenuOpen(false)}
+                            className="flex items-center justify-between text-gray-700 font-medium py-1"
+                          >
+                            {item.label} <ChevronRight size={16} className="text-gray-300" />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* All Categories with Icons */}
+                  <div>
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">All Categories</h3>
+                    <ul className="space-y-3">
+                      {navItems.map((item) => (
+                        <li key={item.id}>
+                          <Link 
+                             to={item.link}
+                             onClick={() => setIsMenuOpen(false)}
+                             className="flex items-center gap-3 py-1"
+                          >
+                            {item.image ? (
+                                <img src={item.image} alt={item.label} className="w-8 h-8 rounded-full object-cover" />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500">
+                                    {item.label.substring(0, 2)}
+                                </div>
+                            )}
+                            <span className="text-gray-600">{item.label}</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="border-t border-gray-100 pt-6">
+                     <ul className="space-y-3 text-sm text-gray-500">
+                        <li><Link to="/profile" onClick={() => setIsMenuOpen(false)}>My Account</Link></li>
+                        <li><Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link></li>
+                        <li><Link to="/shipping" onClick={() => setIsMenuOpen(false)}>Shipping Policy</Link></li>
+                        <li><Link to="/" onClick={() => setIsMenuOpen(false)}>Contact Us</Link></li>
+                     </ul>
+                  </div>
                 </div>
               </div>
             </motion.div>
