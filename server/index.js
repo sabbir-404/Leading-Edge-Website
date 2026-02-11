@@ -5,7 +5,7 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001; // API Server Port (Keep as 3001)
 
 // Middleware
 app.use(cors());
@@ -17,6 +17,7 @@ const dbConfig = {
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'furniture_shop',
+  port: process.env.DB_PORT || 3306, // MySQL Port (Standard is 3306)
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -28,7 +29,7 @@ const pool = mysql.createPool(dbConfig);
 (async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ Connected to MySQL Database successfully!');
+    console.log('✅ Connected to MySQL Database on port 3306 successfully!');
     
     // Auto-migration: Check if extra_data column exists, if not add it
     try {
@@ -42,6 +43,7 @@ const pool = mysql.createPool(dbConfig);
     connection.release();
   } catch (err) {
     console.error('❌ Database Connection Failed:', err.message);
+    console.log('Ensure XAMPP MySQL is running on port 3306.');
   }
 })();
 
