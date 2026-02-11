@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus, Check, ChevronDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { CURRENCY } from '../constants';
@@ -196,37 +196,39 @@ const Navbar: React.FC = () => {
             {navItems.slice(0, 6).map((item) => (
               <div 
                 key={item.id} 
-                className="relative h-full flex items-center whitespace-nowrap"
+                className="relative h-full flex items-center group"
                 onMouseEnter={() => setHoveredMenuId(item.id)}
                 onMouseLeave={() => setHoveredMenuId(null)}
               >
                 <Link 
                   to={item.link} 
-                  className={`text-sm font-medium transition-colors uppercase tracking-wider flex items-center gap-1 ${hoveredMenuId === item.id ? 'text-accent' : 'text-gray-700 hover:text-accent'}`}
+                  className={`text-sm font-medium transition-colors uppercase tracking-wider flex items-center gap-1 py-2 ${hoveredMenuId === item.id ? 'text-accent' : 'text-gray-700 hover:text-accent'}`}
                 >
                   {item.label}
-                  {item.subCategories.length > 0 && <ChevronDown size={14} />}
+                  {item.subCategories.length > 0 && <ChevronDown size={14} className={`transition-transform duration-200 ${hoveredMenuId === item.id ? 'rotate-180' : ''}`} />}
                 </Link>
 
                 {/* Dropdown Menu */}
                 <AnimatePresence>
                   {hoveredMenuId === item.id && item.subCategories.length > 0 && !isSearchFocused && (
                     <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
+                      exit={{ opacity: 0, y: 15, transition: { duration: 0.15 } }}
                       transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 w-56 bg-white shadow-xl rounded-b-lg border-t-2 border-accent z-50 py-2"
+                      className="absolute top-[100%] left-0 w-64 bg-white shadow-xl rounded-b-xl border-t-2 border-accent z-50 flex flex-col overflow-hidden"
                     >
-                      {item.subCategories.map((sub, idx) => (
-                        <Link 
-                          key={idx}
-                          to={sub.link}
-                          className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-accent transition-colors"
-                        >
-                          {sub.label}
-                        </Link>
-                      ))}
+                      <div className="py-2">
+                        {item.subCategories.map((sub, idx) => (
+                          <Link 
+                            key={idx}
+                            to={sub.link}
+                            className="block px-6 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-accent transition-colors font-medium"
+                          >
+                            {sub.label}
+                          </Link>
+                        ))}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
