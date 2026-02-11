@@ -28,7 +28,7 @@ export interface SpecificShippingCharge {
 export interface Product {
   id: string;
   name: string;
-  categories: string[]; // Changed from single category to array
+  categories: string[]; 
   price: number;
   salePrice?: number;
   onSale?: boolean;
