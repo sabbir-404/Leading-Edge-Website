@@ -11,16 +11,30 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Database Connection
-const pool = mysql.createPool({
+// Database Config - Defaults for XAMPP
+const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_PASSWORD || '', // XAMPP default is empty
   database: process.env.DB_NAME || 'furniture_shop',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
-});
+};
+
+const pool = mysql.createPool(dbConfig);
+
+// Test DB Connection on Startup
+(async () => {
+  try {
+    const connection = await pool.getConnection();
+    console.log('✅ Connected to MySQL Database successfully!');
+    connection.release();
+  } catch (err) {
+    console.error('❌ Database Connection Failed:', err.message);
+    console.log('Ensure XAMPP MySQL is running and database "furniture_shop" exists.');
+  }
+})();
 
 // Routes
 
@@ -28,19 +42,25 @@ const pool = mysql.createPool({
 app.get('/api/products', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM products WHERE is_visible = 1');
-    // Fetch categories and images for each product (simplified for basic setup)
-    // In production, use JOINs or separate queries efficiently
+    
+    // Fetch details for each product
     for (let product of rows) {
+       // Categories
        const [cats] = await pool.query('SELECT category_name FROM product_categories WHERE product_id = ?', [product.id]);
        product.categories = cats.map(c => c.category_name);
+       
+       // Images
        const [imgs] = await pool.query('SELECT image_url FROM product_images WHERE product_id = ?', [product.id]);
        product.images = imgs.map(i => i.image_url);
-       product.variations = []; // fetch variations similarly
+       
+       // Defaults for frontend types
+       product.variations = []; 
        product.specifications = []; 
        product.customTabs = [];
     }
     res.json(rows);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -49,7 +69,6 @@ app.get('/api/products', async (req, res) => {
 app.get('/api/categories', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM categories ORDER BY sort_order ASC');
-    // Map database columns to frontend types if needed
     const categories = rows.map(r => ({
         id: r.id,
         name: r.name,
@@ -77,23 +96,23 @@ app.post('/api/orders', async (req, res) => {
       [order.id, order.userId, order.customerName, order.customerEmail, order.shippingAddress, order.total, 'Pending', 'Unpaid']
     );
 
-    // Insert Order Items would go here in a separate table 'order_items'
+    // In a full app, insert order items here...
 
     await conn.commit();
     res.status(201).json({ message: 'Order created', id: order.id });
   } catch (error) {
     await conn.rollback();
+    console.error(error);
     res.status(500).json({ error: error.message });
   } finally {
     conn.release();
   }
 });
 
-// Auth Login (Mock/Simple)
+// Auth Login (Mock)
 app.post('/api/auth/login', (req, res) => {
     const { email } = req.body;
-    // In real app: Verify password hash from DB
-    // Returning mock user for now
+    // Mock response
     res.json({
         id: 'u-' + Date.now(),
         name: email.split('@')[0],
@@ -104,5 +123,5 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
