@@ -15,6 +15,7 @@ import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import AdminProductEditor from './pages/AdminProductEditor';
+import AdminCategories from './pages/AdminCategories';
 import AdminContent from './pages/AdminContent';
 import AdminShipping from './pages/AdminShipping';
 import AdminPages from './pages/AdminPages';
@@ -69,6 +70,7 @@ const AnimatedRoutes = () => {
            <Route index element={<AdminDashboard />} />
            <Route path="products" element={<Admin />} />
            <Route path="product/:id" element={<AdminProductEditor />} />
+           <Route path="categories" element={<AdminCategories />} />
            <Route path="content" element={<AdminContent />} />
            <Route path="pages" element={<AdminPages />} />
            <Route path="shipping" element={<AdminShipping />} />

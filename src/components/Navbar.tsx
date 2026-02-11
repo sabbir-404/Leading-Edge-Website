@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
-import { NAVIGATION_STRUCTURE, CURRENCY } from '../constants';
+import { CURRENCY } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar: React.FC = () => {
-  const { itemCount, user, logout, cart, cartTotal, updateQuantity, removeFromCart, products } = useShop();
+  const { itemCount, user, logout, cart, cartTotal, updateQuantity, removeFromCart, products, categories } = useShop();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartHovered, setIsCartHovered] = useState(false);
@@ -26,6 +26,22 @@ const Navbar: React.FC = () => {
   // Cart Toast State
   const [showCartToast, setShowCartToast] = useState(false);
   const prevItemCountRef = useRef(itemCount);
+
+  // Build Dynamic Navigation Structure
+  const navItems = categories
+    .filter(c => !c.parentId)
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map(main => ({
+      id: main.id,
+      label: main.name,
+      link: `/gallery/${main.name}`,
+      subCategories: categories
+        .filter(sub => sub.parentId === main.id)
+        .map(sub => ({
+          label: sub.name,
+          link: `/gallery/${sub.name}` // Direct link to category gallery
+        }))
+    }));
 
   useEffect(() => {
     if (itemCount > prevItemCountRef.current) {
@@ -173,7 +189,7 @@ const Navbar: React.FC = () => {
           </div>
 
           <div className="hidden lg:flex items-center space-x-6 h-full">
-            {NAVIGATION_STRUCTURE.map((item) => (
+            {navItems.map((item) => (
               <div 
                 key={item.id} 
                 className="relative h-full flex items-center"
@@ -368,7 +384,7 @@ const Navbar: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {NAVIGATION_STRUCTURE.map((item) => (
+                  {navItems.map((item) => (
                     <div key={item.id} className="border-b border-gray-800/50 pb-2">
                       <div className="flex items-center justify-between">
                         <Link 

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Save, Plus, Trash2 } from 'lucide-react';
-import { CATEGORIES } from '../constants';
 
 const AdminContent: React.FC = () => {
-  const { siteConfig, updateSiteConfig } = useShop();
+  const { siteConfig, updateSiteConfig, categories } = useShop();
   const [config, setConfig] = useState(siteConfig);
   const [activeSubTab, setActiveSubTab] = useState('hero');
 
@@ -136,7 +135,7 @@ const AdminContent: React.FC = () => {
                                 <label className="block text-xs font-bold mb-1">Value</label>
                                 {section.type === 'category' ? (
                                     <select className="w-full border p-2 rounded bg-white" value={section.value as string} onChange={e => updateSection(section.id, 'value', e.target.value)}>
-                                        {CATEGORIES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                        {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                     </select>
                                 ) : (
                                     <input 

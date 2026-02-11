@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom';
-import { LogOut, User, LayoutDashboard, Globe, Truck, FileText, Users, ShoppingCart, Mail, BookOpen, BarChart3, LayoutTemplate } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, Globe, Truck, FileText, Users, ShoppingCart, Mail, BookOpen, BarChart3, LayoutTemplate, Layers } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 const AdminLayout: React.FC = () => {
@@ -34,7 +34,7 @@ const AdminLayout: React.FC = () => {
         <div className="flex-1 py-6 px-3 space-y-1">
            <p className="px-3 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Overview</p>
            
-           <Link to="/admin" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+           <Link to="/admin" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin') && location.pathname === '/admin' ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
               <BarChart3 size={20} /> Dashboard
            </Link>
 
@@ -42,6 +42,10 @@ const AdminLayout: React.FC = () => {
            
            <Link to="/admin/products" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/products') || isActive('/admin/product') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
               <LayoutDashboard size={20} /> Products
+           </Link>
+
+           <Link to="/admin/categories" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/categories') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+              <Layers size={20} /> Categories
            </Link>
            
            <Link to="/admin/orders" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive('/admin/orders') ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>

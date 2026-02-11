@@ -50,7 +50,11 @@ export interface Product {
 export interface Category {
   id: string;
   name: string;
-  image: string;
+  slug: string;
+  image?: string;
+  parentId?: string | null;
+  isFeatured?: boolean; // For Home page grid
+  order?: number;
 }
 
 export interface Catalogue {

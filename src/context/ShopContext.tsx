@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue, ToastMessage } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_USERS, MOCK_ORDERS, MOCK_STATS } from '../constants';
+import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue, ToastMessage, Category } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_USERS, MOCK_ORDERS, MOCK_STATS, INITIAL_CATEGORIES } from '../constants';
 
 interface ShopContextType {
   products: Product[];
+  categories: Category[];
   cart: CartItem[];
   user: User | null;
   users: User[]; 
@@ -37,6 +38,11 @@ interface ShopContextType {
   deleteProductsBulk: (productIds: string[]) => void;
   updateProductsStatusBulk: (productIds: string[], isVisible: boolean) => void;
   
+  // Category Actions
+  addCategory: (category: Category) => void;
+  updateCategory: (category: Category) => void;
+  deleteCategory: (categoryId: string) => void;
+
   updateSiteConfig: (config: SiteConfig) => void;
   
   // Catalogue Actions
@@ -73,6 +79,7 @@ const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
 export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [user, setUser] = useState<User | null>(null);
   
@@ -120,7 +127,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return [...prev, { ...product, quantity: 1, selectedVariation: variation }];
     });
-    // Removed global toast showToast('Added to Cart', 'success'); as it is now handled by Navbar
   };
 
   const updateQuantity = (productId: string, quantity: number, variationId?: string) => {
@@ -210,6 +216,33 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setProducts(prev => prev.map(p => productIds.includes(p.id) ? { ...p, isVisible } : p));
     showToast('Statuses updated', 'success');
   };
+
+  // Category Actions
+  const addCategory = (category: Category) => {
+    setCategories(prev => [...prev, category]);
+    showToast('Category added', 'success');
+  };
+
+  const updateCategory = (category: Category) => {
+    const oldCategory = categories.find(c => c.id === category.id);
+    setCategories(prev => prev.map(c => c.id === category.id ? category : c));
+    
+    // Update product category references if name changed
+    if (oldCategory && oldCategory.name !== category.name) {
+      setProducts(prev => prev.map(p => ({
+        ...p,
+        categories: p.categories.map(c => c === oldCategory.name ? category.name : c)
+      })));
+    }
+    showToast('Category updated', 'success');
+  };
+
+  const deleteCategory = (categoryId: string) => {
+    setCategories(prev => prev.filter(c => c.id !== categoryId));
+    // Optional: Reset parentId for children of deleted category
+    setCategories(prev => prev.map(c => c.parentId === categoryId ? { ...c, parentId: null } : c));
+    showToast('Category deleted', 'info');
+  };
   
   const updateSiteConfig = (config: SiteConfig) => {
     setSiteConfig(config);
@@ -285,11 +318,12 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <ShopContext.Provider value={{ 
-      products, cart, user, users, orders, siteConfig, customPages, shippingAreas, shippingMethods,
+      products, categories, cart, user, users, orders, siteConfig, customPages, shippingAreas, shippingMethods,
       dashboardStats, newsletters, toasts,
       addToCart, removeFromCart, updateQuantity, clearCart, 
       login, logout, 
       addProduct, updateProduct, deleteProduct, deleteProductsBulk, updateProductsStatusBulk,
+      addCategory, updateCategory, deleteCategory,
       updateSiteConfig,
       addCatalogue, updateCatalogue, deleteCatalogue,
       addPage, updatePage, deletePage,
