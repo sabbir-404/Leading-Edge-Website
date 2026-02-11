@@ -13,6 +13,7 @@ import Returns from './pages/Returns';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import AdminLogin from './pages/AdminLogin';
 import RequireAuth from './components/RequireAuth';
 import { ShopProvider } from './context/ShopContext';
 
@@ -46,6 +47,7 @@ const AnimatedRoutes = () => {
         <Route path="/returns" element={<PageTransition><Returns /></PageTransition>} />
         <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+        <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
         <Route 
           path="/admin" 
           element={

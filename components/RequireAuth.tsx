@@ -12,9 +12,11 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, adminOnly = false }
   const location = useLocation();
 
   if (!user) {
-    // Redirect them to the /login page, but save the current location they were
-    // trying to go to when they were redirected. This allows us to send them
-    // along to that page after they login, which is a nicer user experience.
+    if (adminOnly) {
+         // Redirect to Admin Login if trying to access admin route
+         return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
+    // Redirect to normal login for other routes
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

@@ -70,7 +70,6 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Logo */}
           <div className="flex-shrink-0 cursor-pointer hidden md:block" onClick={() => navigate('/')}>
-             {/* Replace the src below with your actual logo image path, e.g., src="/logo.png" */}
              <img 
                src="/Logo/logo black.png" 
                alt="Leading Edge" 
@@ -80,7 +79,6 @@ const Navbar: React.FC = () => {
           
           {/* Mobile Logo */}
            <div className="flex-shrink-0 cursor-pointer md:hidden" onClick={() => navigate('/')}>
-             {/* Replace the src below with your actual logo image path */}
              <img 
                src="/Logo/logo black.png" 
                alt="Leading Edge" 

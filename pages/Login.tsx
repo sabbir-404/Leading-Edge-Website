@@ -34,7 +34,7 @@ const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:border-accent"
-                placeholder="user@example.com (use 'admin' for admin panel)"
+                placeholder="user@example.com"
                 required
               />
             </div>
