@@ -6,7 +6,7 @@ import { useShop } from '../context/ShopContext';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 
 const ProjectDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { projects } = useShop();
   

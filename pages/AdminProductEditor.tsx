@@ -8,7 +8,7 @@ import { CURRENCY } from '../constants';
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 const AdminProductEditor: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { products, addProduct, updateProduct, shippingAreas, showToast } = useShop();
   const [activeTab, setActiveTab] = useState('general');

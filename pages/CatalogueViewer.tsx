@@ -6,7 +6,7 @@ import { CATALOGUES } from '../constants';
 import { ArrowLeft, Download } from 'lucide-react';
 
 const CatalogueViewer: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
   const catalogue = CATALOGUES.find(c => c.id === id);
 

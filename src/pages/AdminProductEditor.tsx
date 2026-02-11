@@ -1,24 +1,29 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { Product, ProductVariation, ProductSpecification, ProductTab, SpecificShippingCharge } from '../types';
-import { Save, Eye, ArrowLeft, Plus, Trash2, CheckSquare, Square, Upload, Image as ImageIcon } from 'lucide-react';
+import { Save, Eye, ArrowLeft, Plus, Trash2, CheckSquare, Square, Search, X, Link as LinkIcon } from 'lucide-react';
 import { CURRENCY } from '../constants';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 const AdminProductEditor: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { products, categories, addProduct, updateProduct, shippingAreas, showToast } = useShop();
   const [activeTab, setActiveTab] = useState('general');
   const [showPreview, setShowPreview] = useState(false);
+  
+  // Related Products Search State
+  const [relatedSearch, setRelatedSearch] = useState('');
+  const [isRelatedSearchFocused, setIsRelatedSearchFocused] = useState(false);
 
   // Initial State
   const [formData, setFormData] = useState<Product>({
     id: `PROD-${Date.now()}`,
     name: '',
-    categories: ['Furniture'], // Default category
+    categories: ['Furniture'],
     price: 0,
     shortDescription: '',
     description: '',
@@ -32,7 +37,8 @@ const AdminProductEditor: React.FC = () => {
     specifications: [],
     customTabs: [],
     weight: 0,
-    specificShippingCharges: []
+    specificShippingCharges: [],
+    relatedProducts: [] 
   });
 
   // Local state for adding variations
@@ -51,13 +57,13 @@ const AdminProductEditor: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleCategoryChange = (category: string) => {
+  const handleCategoryChange = (categoryName: string) => {
     setFormData(prev => {
         const cats = prev.categories || [];
-        if (cats.includes(category)) {
-            return { ...prev, categories: cats.filter(c => c !== category) };
+        if (cats.includes(categoryName)) {
+            return { ...prev, categories: cats.filter(c => c !== categoryName) };
         } else {
-            return { ...prev, categories: [...cats, category] };
+            return { ...prev, categories: [...cats, categoryName] };
         }
     });
   };
@@ -67,15 +73,20 @@ const AdminProductEditor: React.FC = () => {
         showToast('Please select at least one category', 'error');
         return;
     }
+    if (!formData.name) {
+        showToast('Product name is required', 'error');
+        return;
+    }
+    if (formData.price < 0) {
+        showToast('Price cannot be negative', 'error');
+        return;
+    }
     
     if (id === 'new') {
       addProduct(formData);
     } else {
       updateProduct(formData);
     }
-    // Stay on page and show notification is handled by context actions mostly, 
-    // but context actions for add/update product currently show toast.
-    // We will just wait.
   };
 
   // Grouped Variations Logic
@@ -103,7 +114,7 @@ const AdminProductEditor: React.FC = () => {
     setFormData(prev => ({ ...prev, variations: prev.variations.filter(v => v.id !== id) }));
   };
 
-  // Other handlers (Specs, Tabs, Gallery, Shipping) remain largely same
+  // Specs
   const addSpec = () => setFormData(prev => ({ ...prev, specifications: [...prev.specifications, { key: '', value: '' }] }));
   const updateSpec = (idx: number, field: 'key' | 'value', value: string) => {
     const updated = [...formData.specifications];
@@ -112,6 +123,7 @@ const AdminProductEditor: React.FC = () => {
   };
   const removeSpec = (idx: number) => setFormData(prev => ({ ...prev, specifications: prev.specifications.filter((_, i) => i !== idx) }));
 
+  // Custom Tabs
   const addCustomTab = () => setFormData(prev => ({ ...prev, customTabs: [...prev.customTabs, { id: generateId(), title: 'New Tab', content: '' }] }));
   const updateCustomTab = (idx: number, field: keyof ProductTab, value: string) => {
     const updated = [...formData.customTabs];
@@ -120,6 +132,7 @@ const AdminProductEditor: React.FC = () => {
   };
   const removeCustomTab = (idx: number) => setFormData(prev => ({ ...prev, customTabs: prev.customTabs.filter((_, i) => i !== idx) }));
 
+  // Gallery
   const addGalleryImage = () => setFormData(prev => ({ ...prev, images: [...(prev.images || []), ''] }));
   const updateGalleryImage = (idx: number, value: string) => {
     const updated = [...(formData.images || [])];
@@ -128,34 +141,7 @@ const AdminProductEditor: React.FC = () => {
   };
   const removeGalleryImage = (idx: number) => setFormData(prev => ({ ...prev, images: prev.images?.filter((_, i) => i !== idx) }));
 
-  // File Upload Handlers
-  const handleThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setFormData(prev => ({ 
-                ...prev, 
-                images: [...(prev.images || []), reader.result as string] 
-            }));
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-  };
-
+  // Shipping
   const addShippingCharge = () => setFormData(prev => ({ ...prev, specificShippingCharges: [...(prev.specificShippingCharges || []), { areaId: shippingAreas[0]?.id || '', charge: 0 }] }));
   const updateShippingCharge = (idx: number, field: keyof SpecificShippingCharge, value: any) => {
       const updated = [...(formData.specificShippingCharges || [])];
@@ -164,16 +150,34 @@ const AdminProductEditor: React.FC = () => {
   };
   const removeShippingCharge = (idx: number) => setFormData(prev => ({ ...prev, specificShippingCharges: prev.specificShippingCharges?.filter((_, i) => i !== idx) }));
 
-  // Get available categories from context, filtered to main categories and sorted by order
-  const availableCategories = categories
-    .filter(c => !c.parentId)
-    .sort((a, b) => (a.order || 0) - (b.order || 0))
-    .map(c => c.name);
+  // Related Products Logic
+  const handleAddRelated = (product: Product) => {
+      if (formData.relatedProducts?.includes(product.id)) return;
+      setFormData(prev => ({ ...prev, relatedProducts: [...(prev.relatedProducts || []), product.id] }));
+      setRelatedSearch('');
+      setIsRelatedSearchFocused(false);
+  };
+
+  const handleRemoveRelated = (productId: string) => {
+      setFormData(prev => ({ ...prev, relatedProducts: prev.relatedProducts?.filter(id => id !== productId) }));
+  };
+
+  // Get list of categories to show
+  const displayCategories = categories.map(c => c.name);
+
+  // Filter products for related search
+  const filteredSearchProducts = relatedSearch 
+    ? products.filter(p => 
+        p.id !== formData.id && // exclude self
+        !formData.relatedProducts?.includes(p.id) && // exclude already added
+        (p.name.toLowerCase().includes(relatedSearch.toLowerCase()) || p.id.includes(relatedSearch))
+      ).slice(0, 5) 
+    : [];
 
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
-          <button onClick={() => navigate('/admin')} className="flex items-center text-gray-500 hover:text-gray-800">
+          <button onClick={() => navigate('/admin/products')} className="flex items-center text-gray-500 hover:text-gray-800">
             <ArrowLeft size={20} className="mr-2" /> Back to Products
           </button>
           <div className="flex gap-4">
@@ -189,13 +193,13 @@ const AdminProductEditor: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-24">
-                {['general', 'images', 'variations', 'specs', 'tabs', 'shipping'].map(tab => (
+                {['general', 'images', 'variations', 'specs', 'tabs', 'shipping', 'related'].map(tab => (
                     <button 
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`w-full text-left px-6 py-4 font-medium border-l-4 capitalize ${activeTab === tab ? 'border-accent bg-orange-50 text-accent' : 'border-transparent hover:bg-gray-50'}`}
                     >
-                        {tab === 'specs' ? 'Specifications' : tab === 'tabs' ? 'Custom Tabs' : tab}
+                        {tab === 'specs' ? 'Specifications' : tab === 'tabs' ? 'Custom Tabs' : tab === 'related' ? 'Related Products' : tab}
                     </button>
                 ))}
              </div>
@@ -219,8 +223,7 @@ const AdminProductEditor: React.FC = () => {
                          <div>
                             <label className="block text-sm font-bold mb-2">Categories (Select All applicable)</label>
                             <div className="border rounded-lg p-3 max-h-40 overflow-y-auto bg-gray-50">
-                                {availableCategories.length === 0 ? <p className="text-gray-500 text-sm">No categories found.</p> : null}
-                                {availableCategories.map(c => (
+                                {displayCategories.map(c => (
                                     <label key={c} className="flex items-center gap-2 mb-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
                                         <div onClick={(e) => { e.preventDefault(); handleCategoryChange(c); }}>
                                             {formData.categories.includes(c) ? <CheckSquare size={18} className="text-accent"/> : <Square size={18} className="text-gray-400"/>}
@@ -243,70 +246,22 @@ const AdminProductEditor: React.FC = () => {
                 )}
 
                 {activeTab === 'images' && (
-                  <div className="space-y-8">
-                    {/* Thumbnail Section */}
+                  <div className="space-y-6">
+                    <h2 className="text-xl font-bold">Images</h2>
                     <div>
-                      <h2 className="text-xl font-bold mb-4">Thumbnail</h2>
-                      <div className="flex flex-col md:flex-row gap-6 items-start">
-                          <div className="w-40 h-40 bg-gray-100 rounded-lg border-2 border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                              {formData.image ? <img src={formData.image} className="w-full h-full object-cover" /> : <ImageIcon className="text-gray-300" size={48} />}
-                          </div>
-                          <div className="flex-1 w-full space-y-4">
-                              <div>
-                                  <label className="block text-xs font-bold text-gray-500 mb-1">Image URL</label>
-                                  <input className="w-full border p-3 rounded" value={formData.image} onChange={e => handleChange('image', e.target.value)} placeholder="https://..." />
-                              </div>
-                              <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors group cursor-pointer">
-                                  <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                                  <div className="flex items-center justify-center gap-2 text-gray-500 group-hover:text-accent transition-colors">
-                                      <Upload size={20} />
-                                      <span className="font-medium">Upload from computer</span>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
+                      <label className="block text-sm font-bold mb-2">Thumbnail URL</label>
+                      <input className="w-full border p-3 rounded" value={formData.image} onChange={e => handleChange('image', e.target.value)} />
                     </div>
-
-                    <div className="border-t pt-8">
-                       <div className="flex justify-between items-center mb-6">
-                           <h2 className="text-xl font-bold">Gallery Images</h2>
-                       </div>
-                       
-                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                           {formData.images?.map((img, idx) => (
-                              <div key={idx} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                                 <img src={img} className="w-full h-full object-cover" />
-                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                     <button onClick={() => removeGalleryImage(idx)} className="bg-white text-red-500 p-2 rounded-full hover:bg-red-50"><Trash2 size={16} /></button>
-                                 </div>
-                                 <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-1">
-                                     <input className="w-full text-xs bg-transparent border-none p-1 focus:outline-none truncate" value={img} onChange={e => updateGalleryImage(idx, e.target.value)} />
-                                 </div>
-                              </div>
-                           ))}
-                       </div>
-
-                       <div className="flex flex-col md:flex-row gap-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
-                           <div className="flex-1">
-                               <h4 className="font-bold text-gray-700 mb-2">Add via URL</h4>
-                               <button onClick={addGalleryImage} className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 w-full flex items-center justify-center gap-2">
-                                   <Plus size={16} /> Add Empty Row
-                               </button>
-                           </div>
-                           <div className="flex items-center justify-center">
-                               <span className="text-gray-400 font-bold text-sm">OR</span>
-                           </div>
-                           <div className="flex-1">
-                               <h4 className="font-bold text-gray-700 mb-2">Upload Files</h4>
-                               <div className="relative border-2 border-dashed border-gray-300 bg-white rounded-lg p-2 text-center hover:border-accent transition-colors cursor-pointer h-[42px] flex items-center justify-center">
-                                  <input type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                                  <div className="flex items-center gap-2 text-gray-500 text-sm">
-                                      <Upload size={16} />
-                                      <span>Select files</span>
-                                  </div>
-                               </div>
-                           </div>
-                       </div>
+                    <div className="border-t pt-6">
+                       <label className="block text-sm font-bold mb-4">Gallery Images</label>
+                       {formData.images?.map((img, idx) => (
+                          <div key={idx} className="flex gap-4 mb-4 items-center">
+                             <img src={img} className="w-12 h-12 bg-gray-100 rounded object-cover" />
+                             <input className="w-full border p-2 rounded" value={img} onChange={e => updateGalleryImage(idx, e.target.value)} />
+                             <button onClick={() => removeGalleryImage(idx)} className="text-red-500 p-2"><Trash2 /></button>
+                          </div>
+                       ))}
+                       <button onClick={addGalleryImage} className="text-accent font-bold text-sm flex items-center gap-2"><Plus size={16} /> Add Image</button>
                     </div>
                   </div>
                 )}
@@ -418,15 +373,116 @@ const AdminProductEditor: React.FC = () => {
                     </div>
                 )}
 
+                {activeTab === 'related' && (
+                    <div className="space-y-6">
+                        <h2 className="text-xl font-bold mb-4">Related Products</h2>
+                        <div className="relative">
+                            <div className="flex items-center border rounded-lg bg-gray-50 px-3 py-2">
+                                <Search size={18} className="text-gray-400 mr-2" />
+                                <input 
+                                    className="bg-transparent outline-none w-full"
+                                    placeholder="Search products to add..." 
+                                    value={relatedSearch}
+                                    onChange={e => {
+                                        setRelatedSearch(e.target.value);
+                                        setIsRelatedSearchFocused(true);
+                                    }}
+                                    onFocus={() => setIsRelatedSearchFocused(true)}
+                                />
+                            </div>
+                            {isRelatedSearchFocused && relatedSearch && (
+                                <div className="absolute top-full left-0 right-0 bg-white border shadow-lg rounded-b-lg z-10 max-h-60 overflow-y-auto">
+                                    {filteredSearchProducts.length > 0 ? (
+                                        filteredSearchProducts.map(p => (
+                                            <div 
+                                                key={p.id} 
+                                                className="p-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between border-b last:border-0"
+                                                onClick={() => handleAddRelated(p)}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <img src={p.image} className="w-8 h-8 rounded object-cover bg-gray-100" />
+                                                    <span className="text-sm font-medium">{p.name}</span>
+                                                </div>
+                                                <Plus size={16} className="text-green-600" />
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="p-3 text-sm text-gray-500">No matching products found</div>
+                                    )}
+                                    <div className="p-2 bg-gray-50 text-right">
+                                        <button onClick={() => setIsRelatedSearchFocused(false)} className="text-xs text-blue-600 font-bold">Close</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="border rounded-lg overflow-hidden">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50 border-b">
+                                    <tr>
+                                        <th className="p-3">Product</th>
+                                        <th className="p-3">Price</th>
+                                        <th className="p-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {(formData.relatedProducts || []).map(rId => {
+                                        const rProd = products.find(p => p.id === rId);
+                                        if (!rProd) return null;
+                                        return (
+                                            <tr key={rId}>
+                                                <td className="p-3 flex items-center gap-3">
+                                                    <img src={rProd.image} className="w-10 h-10 rounded object-cover bg-gray-100" />
+                                                    <span className="font-medium">{rProd.name}</span>
+                                                </td>
+                                                <td className="p-3">{CURRENCY}{rProd.price}</td>
+                                                <td className="p-3 text-right">
+                                                    <button onClick={() => handleRemoveRelated(rId)} className="text-red-500 hover:bg-red-50 p-1 rounded"><Trash2 size={16}/></button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {(formData.relatedProducts || []).length === 0 && (
+                                        <tr>
+                                            <td colSpan={3} className="p-6 text-center text-gray-400">No related products selected.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">These products will be displayed as "Related Products" on the product detail page.</p>
+                    </div>
+                )}
+
              </div>
           </div>
       </div>
       
       {showPreview && (
-         <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
-            <div className="bg-white p-8 rounded-lg">
-               <h3 className="font-bold mb-4">Preview Simulated</h3>
-               <button onClick={() => setShowPreview(false)} className="bg-gray-800 text-white px-4 py-2 rounded">Close</button>
+         <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white p-8 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+               <div className="flex justify-between items-center mb-6">
+                   <h3 className="font-bold text-xl">Preview: {formData.name}</h3>
+                   <button onClick={() => setShowPreview(false)} className="bg-gray-100 hover:bg-gray-200 p-2 rounded-full"><X size={20}/></button>
+               </div>
+               
+               <div className="grid grid-cols-2 gap-8">
+                   <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                       <img src={formData.image} className="w-full h-full object-cover" />
+                   </div>
+                   <div>
+                       <h1 className="text-3xl font-serif font-bold mb-2">{formData.name}</h1>
+                       <div className="text-2xl font-bold text-primary mb-4">{CURRENCY}{formData.onSale ? formData.salePrice : formData.price}</div>
+                       <p className="text-gray-600 mb-6">{formData.shortDescription}</p>
+                       <div className="bg-gray-50 p-4 rounded text-sm text-gray-500 border border-gray-100">
+                           <p><strong>Categories:</strong> {formData.categories.join(', ')}</p>
+                           <p><strong>Model:</strong> {formData.modelNumber}</p>
+                           <p><strong>Variations:</strong> {formData.variations.length}</p>
+                           <p><strong>Specs:</strong> {formData.specifications.length} items</p>
+                           <p><strong>Related:</strong> {(formData.relatedProducts || []).length} products</p>
+                       </div>
+                   </div>
+               </div>
             </div>
          </div>
       )}

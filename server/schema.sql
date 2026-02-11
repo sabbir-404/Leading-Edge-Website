@@ -27,6 +27,14 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS related_products (
+    product_id VARCHAR(50),
+    related_product_id VARCHAR(50),
+    PRIMARY KEY (product_id, related_product_id),
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (related_product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS product_categories (
     product_id VARCHAR(50),
     category_name VARCHAR(255),
@@ -62,4 +70,35 @@ CREATE TABLE IF NOT EXISTS orders (
     status VARCHAR(50) DEFAULT 'Pending',
     payment_status VARCHAR(50) DEFAULT 'Unpaid',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+    id VARCHAR(50) PRIMARY KEY,
+    title VARCHAR(255),
+    description TEXT,
+    cover_image TEXT,
+    client VARCHAR(255),
+    completion_date VARCHAR(50),
+    images LONGTEXT -- JSON array of strings
+);
+
+CREATE TABLE IF NOT EXISTS site_config (
+    id VARCHAR(50) PRIMARY KEY, -- usually 'main-config'
+    config_data LONGTEXT -- Stores the entire SiteConfig JSON
+);
+
+CREATE TABLE IF NOT EXISTS custom_pages (
+    id VARCHAR(50) PRIMARY KEY,
+    slug VARCHAR(255) UNIQUE,
+    title VARCHAR(255),
+    content_json LONGTEXT -- Stores Page structure
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_email VARCHAR(255),
+    action_type VARCHAR(50),
+    target_id VARCHAR(50),
+    details TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

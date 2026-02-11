@@ -84,22 +84,34 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Initial Data Fetch
   useEffect(() => {
+    // Check Local Storage for user
+    const storedUser = localStorage.getItem('furniture_user');
+    if (storedUser) setUser(JSON.parse(storedUser));
+
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [prodData, catData, userData] = await Promise.all([
-          api.getProducts().catch(err => { console.error('Products fetch error:', err); return []; }), 
-          api.getCategories().catch(err => { console.error('Categories fetch error:', err); return []; }),
-          api.getUsers().catch(err => { console.error('Users fetch error:', err); return []; })
+        const [prodData, catData, userData, projData, configData, pagesData, ordersData] = await Promise.all([
+          api.getProducts().catch(err => []), 
+          api.getCategories().catch(err => []),
+          api.getUsers().catch(err => []),
+          api.getProjects().catch(err => []),
+          api.getConfig().catch(err => {}),
+          api.getPages().catch(err => []),
+          api.getOrders().catch(err => [])
         ]);
 
         if (prodData.length > 0) setProducts(prodData);
         if (catData.length > 0) setCategories(catData);
         if (userData.length > 0) setUsers(userData);
+        if (projData.length > 0) setProjects(projData);
+        if (configData && Object.keys(configData).length > 0) setSiteConfig(configData);
+        if (pagesData.length > 0) setCustomPages(pagesData);
+        if (ordersData.length > 0) setOrders(ordersData);
         
       } catch (error) {
         console.error("Failed to fetch initial data", error);
-        showToast("Backend connection failed. Ensure server is running.", "error");
+        showToast("Backend connection failed.", "error");
       } finally {
         setIsLoading(false);
       }
@@ -186,26 +198,16 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const userData = await api.login(email, password);
       setUser(userData);
+      localStorage.setItem('furniture_user', JSON.stringify(userData));
       showToast('Logged in successfully', 'success');
     } catch (e: any) {
       showToast(e.message || 'Login failed', 'error');
-      // For Demo Fallback if server fails
-      if(e.message === 'Failed to fetch') {
-          const newUser: User = { 
-            id: `u-${Date.now()}`, 
-            name: email.split('@')[0], 
-            email, 
-            role: email.includes('admin') ? 'admin' : 'customer',
-            joinDate: new Date().toISOString().split('T')[0]
-          };
-          setUser(newUser);
-          showToast('Logged in (Local Mode)', 'info');
-      }
     }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('furniture_user');
     showToast('Logged out', 'info');
   };
 
@@ -214,8 +216,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addProduct = async (product: Product) => {
     try {
         const newProduct = { ...product, id: product.id || `PROD-${Date.now()}` };
-        setProducts(prev => [...prev, newProduct]);
         await api.createProduct(newProduct);
+        setProducts(prev => [...prev, newProduct]);
         showToast('Product saved to database', 'success');
     } catch (e: any) {
         showToast(`Failed to save: ${e.message}`, 'error');
@@ -224,8 +226,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const updateProduct = async (product: Product) => {
     try {
-        setProducts(prev => prev.map(p => p.id === product.id ? product : p));
         await api.updateProduct(product);
+        setProducts(prev => prev.map(p => p.id === product.id ? product : p));
         showToast('Product updated successfully', 'success');
     } catch (e: any) {
         showToast(`Failed to update: ${e.message}`, 'error');
@@ -234,8 +236,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const deleteProduct = async (productId: string) => {
     try {
-        setProducts(prev => prev.filter(p => p.id !== productId));
         await api.deleteProduct(productId);
+        setProducts(prev => prev.filter(p => p.id !== productId));
         showToast('Product deleted from database', 'info');
     } catch (e: any) {
         showToast(`Failed to delete: ${e.message}`, 'error');
@@ -263,8 +265,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Categories
   const addCategory = async (category: Category) => {
     try {
-        setCategories(prev => [...prev, category]);
         await api.createCategory(category);
+        setCategories(prev => [...prev, category]);
         showToast('Category saved', 'success');
     } catch (e: any) {
         showToast(`Failed to save category: ${e.message}`, 'error');
@@ -273,8 +275,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateCategory = async (category: Category) => {
     try {
-        setCategories(prev => prev.map(c => c.id === category.id ? category : c));
         await api.updateCategory(category);
+        setCategories(prev => prev.map(c => c.id === category.id ? category : c));
         showToast('Category updated', 'success');
     } catch (e: any) {
         showToast(`Failed to update category: ${e.message}`, 'error');
@@ -283,8 +285,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const deleteCategory = async (categoryId: string) => {
     try {
-        setCategories(prev => prev.filter(c => c.id !== categoryId));
         await api.deleteCategory(categoryId);
+        setCategories(prev => prev.filter(c => c.id !== categoryId));
         showToast('Category deleted', 'info');
     } catch (e: any) {
         showToast(`Failed to delete category: ${e.message}`, 'error');
@@ -326,52 +328,81 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Projects (Local State Only for now)
-  const addProject = (project: Project) => {
-    setProjects(prev => [...prev, project]);
-    showToast('Project added (Local Only)', 'success');
+  // Projects
+  const addProject = async (project: Project) => {
+    try {
+        await api.createProject(project);
+        setProjects(prev => [...prev, project]);
+        showToast('Project saved', 'success');
+    } catch (e: any) {
+        showToast(e.message, 'error');
+    }
   };
 
-  const updateProject = (project: Project) => {
-    setProjects(prev => prev.map(p => p.id === project.id ? project : p));
-    showToast('Project updated (Local Only)', 'success');
+  const updateProject = async (project: Project) => {
+    try {
+        await api.updateProject(project);
+        setProjects(prev => prev.map(p => p.id === project.id ? project : p));
+        showToast('Project updated', 'success');
+    } catch (e: any) {
+        showToast(e.message, 'error');
+    }
   };
 
-  const deleteProject = (projectId: string) => {
-    setProjects(prev => prev.filter(p => p.id !== projectId));
-    showToast('Project deleted (Local Only)', 'info');
+  const deleteProject = async (projectId: string) => {
+    try {
+        await api.deleteProject(projectId);
+        setProjects(prev => prev.filter(p => p.id !== projectId));
+        showToast('Project deleted', 'info');
+    } catch (e: any) {
+        showToast(e.message, 'error');
+    }
   };
   
   // Other Settings
-  const updateSiteConfig = (config: SiteConfig) => {
-    setSiteConfig(config);
-    showToast('Configuration saved (Local Only)', 'success');
+  const updateSiteConfig = async (config: SiteConfig) => {
+    try {
+        await api.updateConfig(config);
+        setSiteConfig(config);
+        showToast('Configuration saved', 'success');
+    } catch (e: any) {
+        showToast(e.message, 'error');
+    }
   };
 
   const addCatalogue = (catalogue: Catalogue) => {
-    setSiteConfig(prev => ({ ...prev, catalogues: [...prev.catalogues, catalogue] }));
-    showToast('Catalogue added', 'success');
+    const newConfig = { ...siteConfig, catalogues: [...siteConfig.catalogues, catalogue] };
+    updateSiteConfig(newConfig);
   };
   const updateCatalogue = (catalogue: Catalogue) => {
-    setSiteConfig(prev => ({ ...prev, catalogues: prev.catalogues.map(c => c.id === catalogue.id ? catalogue : c) }));
-    showToast('Catalogue updated', 'success');
+    const newConfig = { ...siteConfig, catalogues: siteConfig.catalogues.map(c => c.id === catalogue.id ? catalogue : c) };
+    updateSiteConfig(newConfig);
   };
   const deleteCatalogue = (catalogueId: string) => {
-    setSiteConfig(prev => ({ ...prev, catalogues: prev.catalogues.filter(c => c.id !== catalogueId) }));
-    showToast('Catalogue deleted', 'info');
+    const newConfig = { ...siteConfig, catalogues: siteConfig.catalogues.filter(c => c.id !== catalogueId) };
+    updateSiteConfig(newConfig);
   };
   
-  const addPage = (page: CustomPage) => {
-    setCustomPages(prev => [...prev, page]);
-    showToast('Page created', 'success');
+  const addPage = async (page: CustomPage) => {
+    try {
+        await api.createPage(page);
+        setCustomPages(prev => [...prev, page]);
+        showToast('Page created', 'success');
+    } catch (e: any) { showToast(e.message, 'error'); }
   };
-  const updatePage = (page: CustomPage) => {
-    setCustomPages(prev => prev.map(p => p.id === page.id ? page : p));
-    showToast('Page updated', 'success');
+  const updatePage = async (page: CustomPage) => {
+    try {
+        await api.updatePage(page);
+        setCustomPages(prev => prev.map(p => p.id === page.id ? page : p));
+        showToast('Page updated', 'success');
+    } catch (e: any) { showToast(e.message, 'error'); }
   };
-  const deletePage = (pageId: string) => {
-    setCustomPages(prev => prev.filter(p => p.id !== pageId));
-    showToast('Page deleted', 'info');
+  const deletePage = async (pageId: string) => {
+    try {
+        await api.deletePage(pageId);
+        setCustomPages(prev => prev.filter(p => p.id !== pageId));
+        showToast('Page deleted', 'info');
+    } catch (e: any) { showToast(e.message, 'error'); }
   };
 
   const updateShippingAreas = (areas: ShippingArea[]) => setShippingAreas(areas);

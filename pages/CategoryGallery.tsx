@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CURRENCY } from '../constants';
 
 const CategoryGallery: React.FC = () => {
-  const { category } = useParams<{ category: string }>();
+  const { category } = useParams();
   const navigate = useNavigate();
   const { products } = useShop();
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);

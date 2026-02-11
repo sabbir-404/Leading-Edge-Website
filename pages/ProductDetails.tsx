@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { CURRENCY } from '../constants';
 
 const ProductDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart, products } = useShop();
   const [product, setProduct] = useState<Product | undefined>(undefined);
