@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, CartItem, User, Order, SiteConfig } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG } from '../constants';
+import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS } from '../constants';
 
 interface ShopContextType {
   products: Product[];
@@ -8,6 +8,8 @@ interface ShopContextType {
   user: User | null;
   orders: Order[];
   siteConfig: SiteConfig;
+  shippingAreas: ShippingArea[];
+  shippingMethods: ShippingMethod[];
   addToCart: (product: Product, variation?: any) => void;
   removeFromCart: (productId: string, variationId?: string) => void;
   updateQuantity: (productId: string, quantity: number, variationId?: string) => void;
@@ -17,7 +19,11 @@ interface ShopContextType {
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   deleteProduct: (productId: string) => void;
+  deleteProductsBulk: (productIds: string[]) => void;
+  updateProductsStatusBulk: (productIds: string[], isVisible: boolean) => void;
   updateSiteConfig: (config: SiteConfig) => void;
+  updateShippingAreas: (areas: ShippingArea[]) => void;
+  updateShippingMethods: (methods: ShippingMethod[]) => void;
   cartTotal: number;
   itemCount: number;
 }
@@ -30,6 +36,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(INITIAL_SITE_CONFIG);
+  const [shippingAreas, setShippingAreas] = useState<ShippingArea[]>(INITIAL_SHIPPING_AREAS);
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>(INITIAL_SHIPPING_METHODS);
 
   // Cart Logic
   const addToCart = (product: Product, variation?: any) => {
@@ -133,7 +141,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Admin Logic
   const addProduct = (product: Product) => {
-    // Generate ID if not provided (though AdminEditor will likely provide one)
     const newProduct = { ...product, id: product.id || `PROD-${Date.now()}` };
     setProducts(prev => [...prev, newProduct]);
   };
@@ -146,16 +153,33 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setProducts(prev => prev.filter(p => p.id !== productId));
   };
 
+  const deleteProductsBulk = (productIds: string[]) => {
+    setProducts(prev => prev.filter(p => !productIds.includes(p.id)));
+  };
+
+  const updateProductsStatusBulk = (productIds: string[], isVisible: boolean) => {
+    setProducts(prev => prev.map(p => productIds.includes(p.id) ? { ...p, isVisible } : p));
+  };
+
   const updateSiteConfig = (config: SiteConfig) => {
     setSiteConfig(config);
   };
 
+  const updateShippingAreas = (areas: ShippingArea[]) => {
+    setShippingAreas(areas);
+  };
+
+  const updateShippingMethods = (methods: ShippingMethod[]) => {
+    setShippingMethods(methods);
+  };
+
   return (
     <ShopContext.Provider value={{ 
-      products, cart, user, orders, siteConfig,
+      products, cart, user, orders, siteConfig, shippingAreas, shippingMethods,
       addToCart, removeFromCart, updateQuantity, clearCart, 
       login, logout, 
-      addProduct, updateProduct, deleteProduct, updateSiteConfig,
+      addProduct, updateProduct, deleteProduct, deleteProductsBulk, updateProductsStatusBulk,
+      updateSiteConfig, updateShippingAreas, updateShippingMethods,
       cartTotal, itemCount 
     }}>
       {children}

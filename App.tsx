@@ -16,6 +16,7 @@ import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import AdminProductEditor from './pages/AdminProductEditor';
 import AdminContent from './pages/AdminContent';
+import AdminShipping from './pages/AdminShipping';
 import RequireAuth from './components/RequireAuth';
 import { ShopProvider } from './context/ShopContext';
 
@@ -78,6 +79,16 @@ const AnimatedRoutes = () => {
             <PageTransition>
               <RequireAuth adminOnly>
                 <AdminContent />
+              </RequireAuth>
+            </PageTransition>
+          } 
+        />
+        <Route 
+          path="/admin/shipping" 
+          element={
+            <PageTransition>
+              <RequireAuth adminOnly>
+                <AdminShipping />
               </RequireAuth>
             </PageTransition>
           } 

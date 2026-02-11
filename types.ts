@@ -20,6 +20,11 @@ export interface ProductTab {
   content: string;
 }
 
+export interface SpecificShippingCharge {
+  areaId: string;
+  charge: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -38,6 +43,8 @@ export interface Product {
   variations: ProductVariation[];
   specifications: ProductSpecification[];
   customTabs: ProductTab[];
+  weight?: number; // in kg or lbs
+  specificShippingCharges?: SpecificShippingCharge[];
 }
 
 export interface Category {
@@ -75,13 +82,51 @@ export interface User {
   isAdmin: boolean;
 }
 
+export interface HeroSlide {
+  id: number;
+  image: string;
+  title: string;
+  subtitle: string;
+  alignment: 'center' | 'left-top' | 'left-bottom' | 'right-top' | 'right-bottom';
+  buttonText?: string;
+  buttonLink?: string;
+}
+
+export interface HomeSection {
+  id: string;
+  title: string;
+  type: 'category' | 'ids';
+  value: string | string[]; // Category Name or Array of Product IDs
+  isVisible: boolean;
+}
+
+export interface ShippingArea {
+  id: string;
+  name: string;
+}
+
+export interface ShippingRate {
+  minWeight: number;
+  maxWeight: number;
+  cost: number;
+}
+
+export interface ShippingMethod {
+  id: string;
+  name: string;
+  areaIds: string[];
+  type: 'flat' | 'weight';
+  flatRate?: number;
+  weightRates?: ShippingRate[];
+  isGlobal: boolean; // If true, applies to all unless specific products excluded?
+  specificProductIds?: string[]; // Only applies to these products if not global
+  specificCategoryIds?: string[];
+}
+
 export interface SiteConfig {
-  heroSlides: {
-    id: number;
-    image: string;
-    title: string;
-    subtitle: string;
-  }[];
+  heroSlides: HeroSlide[];
+  homeSections: HomeSection[];
+  catalogues: Catalogue[];
   about: {
     title: string;
     content: string;

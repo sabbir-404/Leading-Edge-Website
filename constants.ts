@@ -1,4 +1,4 @@
-import { Product, Category, Catalogue, SiteConfig } from './types';
+import { Product, Category, Catalogue, SiteConfig, ShippingArea, ShippingMethod } from './types';
 
 export const CATEGORIES: Category[] = [
   { id: '1', name: 'Furniture', image: 'https://picsum.photos/seed/furn/400/400' },
@@ -13,7 +13,7 @@ export const CATEGORIES: Category[] = [
 
 export const MAIN_MENU_CATEGORIES = ['Furniture', 'Light', 'Kitchenware', 'Hardware', 'Sale'];
 
-export const CATALOGUES: Catalogue[] = [
+export const INITIAL_CATALOGUES: Catalogue[] = [
   {
     id: 'cat-2024-spring',
     title: 'Spring Collection 2024',
@@ -40,24 +40,34 @@ export const CATALOGUES: Catalogue[] = [
   }
 ];
 
+// For backward compatibility if imported elsewhere, though we now use siteConfig.catalogues
+export const CATALOGUES = INITIAL_CATALOGUES; 
+
 export const HERO_SLIDES = [
   {
     id: 1,
     image: 'https://picsum.photos/seed/hero1/1920/1080',
     title: 'Modern Comfort',
     subtitle: 'Redefining the living room experience.',
+    alignment: 'left-bottom' as const,
+    buttonText: 'Shop Now',
+    buttonLink: '/gallery/Furniture'
   },
   {
     id: 2,
     image: 'https://picsum.photos/seed/hero2/1920/1080',
     title: 'Artistic Spaces',
     subtitle: 'Curated for the visionary home.',
+    alignment: 'center' as const,
+    buttonText: 'View Collection',
+    buttonLink: '/gallery/Decor'
   },
   {
     id: 3,
     image: 'https://picsum.photos/seed/hero3/1920/1080',
     title: 'Sustainable Luxury',
     subtitle: 'Eco-friendly materials, premium feel.',
+    alignment: 'right-bottom' as const
   },
 ];
 
@@ -89,7 +99,9 @@ const generateProducts = (category: string, count: number, startId: number): Pro
         { key: 'Material', value: 'Premium Composite' },
         { key: 'Dimensions', value: 'Standard' }
       ],
-      customTabs: []
+      customTabs: [],
+      weight: 10,
+      specificShippingCharges: []
     };
   });
 };
@@ -103,6 +115,13 @@ export const INITIAL_PRODUCTS = [
 
 export const INITIAL_SITE_CONFIG: SiteConfig = {
   heroSlides: HERO_SLIDES,
+  homeSections: [
+    { id: 'sec-1', title: 'Furniture', type: 'category', value: 'Furniture', isVisible: true },
+    { id: 'sec-2', title: 'Light', type: 'category', value: 'Light', isVisible: true },
+    { id: 'sec-3', title: 'Kitchenware', type: 'category', value: 'Kitchenware', isVisible: true },
+    { id: 'sec-4', title: 'Hardware', type: 'category', value: 'Hardware', isVisible: true },
+  ],
+  catalogues: INITIAL_CATALOGUES,
   about: {
     title: "Crafting the Future of Living",
     content: "Founded in 2024, Leading Edge was born from a desire to bridge the gap between high-concept art and functional living. We believe that furniture shouldn't just fill a space; it should define it. Our curators travel the globe to find pieces that speak to the modern soul—minimalist yet bold, sustainable yet luxurious.",
@@ -116,4 +135,33 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
   }
 };
 
-export const FEATURED_SECTIONS_TITLES = ['Furniture', 'Light', 'Kitchenware', 'Hardware'];
+export const INITIAL_SHIPPING_AREAS: ShippingArea[] = [
+  { id: 'area-us', name: 'United States' },
+  { id: 'area-can', name: 'Canada' },
+  { id: 'area-eu', name: 'Europe' },
+];
+
+export const INITIAL_SHIPPING_METHODS: ShippingMethod[] = [
+  { 
+    id: 'method-std', 
+    name: 'Standard Shipping', 
+    areaIds: ['area-us'], 
+    type: 'flat', 
+    flatRate: 29.99, 
+    isGlobal: true 
+  },
+  { 
+    id: 'method-exp', 
+    name: 'Express Shipping', 
+    areaIds: ['area-us'], 
+    type: 'weight', 
+    weightRates: [
+       { minWeight: 0, maxWeight: 5, cost: 15 },
+       { minWeight: 5, maxWeight: 20, cost: 35 },
+       { minWeight: 20, maxWeight: 100, cost: 80 }
+    ], 
+    isGlobal: true 
+  }
+];
+
+export const FEATURED_SECTIONS_TITLES = ['Furniture', 'Light', 'Kitchenware', 'Hardware']; // Deprecated reference, kept for safety
