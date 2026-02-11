@@ -101,7 +101,7 @@ const Navbar: React.FC = () => {
           {/* Desktop Logo */}
           <div className="flex-shrink-0 cursor-pointer hidden md:block transition-transform duration-300" onClick={() => navigate('/')}>
              <img 
-               src="/Logo/logo black.png" 
+               src="../Public/Logo/logo black.png" 
                alt="Leading Edge" 
                className="h-10 w-auto object-contain" 
              />
@@ -113,7 +113,7 @@ const Navbar: React.FC = () => {
              onClick={() => navigate('/')}
            >
              <img 
-               src="/Logo/logo black.png" 
+               src="../Public/Logo/logo black.png" 
                alt="Leading Edge" 
                className="h-8 w-auto object-contain" 
              />
