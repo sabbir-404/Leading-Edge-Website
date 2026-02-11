@@ -68,15 +68,24 @@ const Navbar: React.FC = () => {
             <Menu size={24} />
           </button>
 
+          {/* Desktop Logo */}
           <div className="flex-shrink-0 cursor-pointer hidden md:block" onClick={() => navigate('/')}>
-             <h1 className="text-2xl font-bold tracking-tighter text-primary">
-              LE<span className="text-accent">A</span>DING<span className="font-light">EDGE</span>
-            </h1>
+             {/* Replace the src below with your actual logo image path, e.g., src="/logo.png" */}
+             <img 
+               src="https://placehold.co/200x50/ffffff/000000?text=LOGO+HERE" 
+               alt="Leading Edge" 
+               className="h-10 w-auto object-contain" 
+             />
           </div>
+          
+          {/* Mobile Logo */}
            <div className="flex-shrink-0 cursor-pointer md:hidden" onClick={() => navigate('/')}>
-             <h1 className="text-xl font-bold tracking-tighter text-primary">
-              LE<span className="text-accent">A</span>
-            </h1>
+             {/* Replace the src below with your actual logo image path */}
+             <img 
+               src="https://placehold.co/120x40/ffffff/000000?text=LOGO" 
+               alt="Leading Edge" 
+               className="h-8 w-auto object-contain" 
+             />
           </div>
 
           <div className="flex-1 max-w-xl mx-2 md:mx-8 relative z-50" ref={searchRef}>
