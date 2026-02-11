@@ -85,7 +85,7 @@ const Navbar: React.FC = () => {
           {/* Desktop Logo */}
           <div className="flex-shrink-0 cursor-pointer hidden md:block" onClick={() => navigate('/')}>
              <img 
-               src="/Logo/logo black.png" 
+               src="../Public/Logo/logo black.png" 
                alt="Leading Edge" 
                className="h-10 w-auto object-contain" 
              />
@@ -94,7 +94,7 @@ const Navbar: React.FC = () => {
           {/* Mobile Logo */}
            <div className="flex-shrink-0 cursor-pointer md:hidden" onClick={() => navigate('/')}>
              <img 
-               src="/Logo/logo black.png" 
+               src="../Public/Logo/logo black.png" 
                alt="Leading Edge" 
                className="h-8 w-auto object-contain" 
              />

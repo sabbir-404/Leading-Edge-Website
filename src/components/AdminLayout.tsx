@@ -25,7 +25,7 @@ const AdminLayout: React.FC = () => {
         <div className="h-16 flex items-center px-6 border-b border-gray-800">
            {/* Logo */}
            <img 
-               src="/Logo/logo black.png" 
+               src="../Public/Logo/logo black.png" 
                alt="Leading Edge" 
                className="h-8 w-auto object-contain invert brightness-0 saturate-100 filter" 
            />
