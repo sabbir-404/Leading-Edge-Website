@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus, Check, ChevronDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { CURRENCY } from '../constants';
@@ -28,22 +28,10 @@ const Navbar: React.FC = () => {
   const [showCartToast, setShowCartToast] = useState(false);
   const prevItemCountRef = useRef(itemCount);
 
-  // Build Dynamic Navigation Structure
+  // Build Dynamic Navigation Structure (Top 6 Categories)
   const navItems = categories
     .filter(c => !c.parentId)
-    .sort((a, b) => (a.order || 0) - (b.order || 0))
-    .map(main => ({
-      id: main.id,
-      label: main.name,
-      link: `/gallery/${main.name}`,
-      image: main.image,
-      subCategories: categories
-        .filter(sub => sub.parentId === main.id)
-        .map(sub => ({
-          label: sub.name,
-          link: `/gallery/${sub.name}` // Direct link to category gallery
-        }))
-    }));
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 
   useEffect(() => {
     if (itemCount > prevItemCountRef.current) {
@@ -95,11 +83,7 @@ const Navbar: React.FC = () => {
   };
 
   const toggleMobileMenu = (id: string) => {
-    if (mobileExpandedId === id) {
-      setMobileExpandedId(null);
-    } else {
-      setMobileExpandedId(id);
-    }
+    setMobileExpandedId(mobileExpandedId === id ? null : id);
   };
 
   return (
@@ -123,9 +107,9 @@ const Navbar: React.FC = () => {
              />
           </div>
           
-          {/* Mobile Logo - Hidden ONLY when search is focused */}
+          {/* Mobile Logo - Soft Animation using max-width */}
            <div 
-             className={`flex-shrink-0 cursor-pointer md:hidden transition-all duration-300 ease-in-out overflow-hidden ${isSearchFocused ? 'w-0 opacity-0' : 'w-auto opacity-100'}`} 
+             className={`flex-shrink-0 cursor-pointer md:hidden transition-all duration-500 ease-in-out overflow-hidden whitespace-nowrap ${isSearchFocused ? 'max-w-0 opacity-0' : 'max-w-[120px] opacity-100'}`} 
              onClick={() => navigate('/')}
            >
              <img 
@@ -140,7 +124,7 @@ const Navbar: React.FC = () => {
             className={`flex-1 relative z-50 flex justify-center transition-all duration-500 ease-in-out ${isSearchFocused ? 'mx-2' : 'mx-2 md:mx-8'}`} 
             ref={searchRef}
           >
-            <div className={`relative group w-full transition-all duration-500 ease-in-out ${isSearchFocused ? '' : 'md:max-w-md'}`}>
+            <div className={`relative group w-full transition-all duration-500 ease-in-out ${isSearchFocused ? 'max-w-full' : 'max-w-[200px] md:max-w-md'}`}>
               <input 
                 type="text" 
                 value={searchQuery}
@@ -205,49 +189,52 @@ const Navbar: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Desktop Menu - Limited to 6 Items. Fades out on search focus. */}
-          <div className={`hidden lg:flex items-center space-x-6 h-full transition-all duration-500 ease-in-out ${isSearchFocused ? 'w-0 opacity-0 overflow-hidden scale-95 translate-x-10' : 'w-auto opacity-100 scale-100 translate-x-0'}`}>
-            {navItems.slice(0, 6).map((item) => (
-              <div 
-                key={item.id} 
-                className="relative h-full flex items-center group"
-                onMouseEnter={() => setHoveredMenuId(item.id)}
-                onMouseLeave={() => setHoveredMenuId(null)}
-              >
-                <Link 
-                  to={item.link} 
-                  className={`text-sm font-medium transition-colors uppercase tracking-wider flex items-center gap-1 py-2 ${hoveredMenuId === item.id ? 'text-accent' : 'text-gray-700 hover:text-accent'}`}
+          {/* Desktop Menu - Hides softly when search is focused */}
+          <div className={`hidden lg:flex items-center gap-6 h-full transition-all duration-500 ease-in-out whitespace-nowrap overflow-hidden ${isSearchFocused ? 'max-w-0 opacity-0 scale-95' : 'max-w-[800px] opacity-100 scale-100'}`}>
+            {navItems.slice(0, 6).map((item) => {
+              const subCats = categories.filter(sub => sub.parentId === item.id);
+              return (
+                <div 
+                  key={item.id} 
+                  className="relative h-full flex items-center group"
+                  onMouseEnter={() => setHoveredMenuId(item.id)}
+                  onMouseLeave={() => setHoveredMenuId(null)}
                 >
-                  {item.label}
-                  {item.subCategories.length > 0 && <ChevronDown size={14} className={`transition-transform duration-200 ${hoveredMenuId === item.id ? 'rotate-180' : ''}`} />}
-                </Link>
+                  <Link 
+                    to={`/gallery/${item.name}`}
+                    className={`text-sm font-medium transition-colors uppercase tracking-wider flex items-center gap-1 py-2 ${hoveredMenuId === item.id ? 'text-accent' : 'text-gray-700 hover:text-accent'}`}
+                  >
+                    {item.name}
+                    {subCats.length > 0 && <ChevronDown size={14} className={`transition-transform duration-200 ${hoveredMenuId === item.id ? 'rotate-180' : ''}`} />}
+                  </Link>
 
-                {/* Dropdown Menu */}
-                <AnimatePresence>
-                  {hoveredMenuId === item.id && item.subCategories.length > 0 && !isSearchFocused && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 15, transition: { duration: 0.15 } }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-[100%] left-0 w-64 bg-white shadow-xl rounded-b-xl border-t-2 border-accent z-50 flex flex-col overflow-hidden"
-                    >
-                      <div className="py-2">
-                        {item.subCategories.map((sub, idx) => (
-                          <Link 
-                            key={idx}
-                            to={sub.link}
-                            className="block px-6 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-accent transition-colors font-medium"
-                          >
-                            {sub.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
+                  {/* Dropdown Menu */}
+                  <AnimatePresence>
+                    {hoveredMenuId === item.id && subCats.length > 0 && !isSearchFocused && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 15, transition: { duration: 0.15 } }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-[100%] left-0 w-64 bg-white shadow-xl rounded-b-xl border-t-2 border-accent z-50 flex flex-col overflow-hidden"
+                      >
+                        <div className="py-2">
+                          {subCats.map((sub) => (
+                            <Link 
+                              key={sub.id}
+                              to={`/gallery/${sub.name}`}
+                              className="block px-6 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-accent transition-colors font-medium"
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-5 text-gray-600 flex-shrink-0 transition-all duration-300">
@@ -424,60 +411,63 @@ const Navbar: React.FC = () => {
                   <div>
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Shop By Room</h3>
                     <ul className="space-y-1">
-                      {navItems.slice(0, 6).map((item) => (
-                        <li key={item.id} className="border-b border-gray-100 last:border-0">
-                          {item.subCategories.length > 0 ? (
-                            // Click toggles submenu
-                            <div 
-                              className="flex items-center justify-between py-3 cursor-pointer select-none"
-                              onClick={() => toggleMobileMenu(item.id)}
-                            >
-                              <span className={`font-medium ${mobileExpandedId === item.id ? 'text-accent' : 'text-gray-700'}`}>
-                                {item.label}
-                              </span>
-                              <ChevronDown 
-                                size={16} 
-                                className={`transition-transform duration-200 text-gray-400 ${mobileExpandedId === item.id ? 'rotate-180 text-accent' : ''}`} 
-                              />
-                            </div>
-                          ) : (
-                            // Direct link if no subcategories
-                            <Link 
-                              to={item.link}
-                              onClick={() => setIsMenuOpen(false)}
-                              className="flex items-center justify-between py-3 text-gray-700 font-medium"
-                            >
-                              {item.label} <ChevronRight size={16} className="text-gray-300" />
-                            </Link>
-                          )}
-
-                          {/* Mobile Submenu Accordion */}
-                          <AnimatePresence>
-                            {mobileExpandedId === item.id && item.subCategories.length > 0 && (
-                              <motion.div 
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden bg-gray-50 rounded-lg mb-2"
+                      {navItems.slice(0, 6).map((item) => {
+                        const subCats = categories.filter(sub => sub.parentId === item.id);
+                        return (
+                          <li key={item.id} className="border-b border-gray-100 last:border-0">
+                            {subCats.length > 0 ? (
+                              // Click toggles submenu
+                              <div 
+                                className="flex items-center justify-between py-3 cursor-pointer select-none"
+                                onClick={() => toggleMobileMenu(item.id)}
                               >
-                                <ul className="py-2 pl-4">
-                                  {item.subCategories.map((sub, idx) => (
-                                    <li key={idx}>
-                                      <Link 
-                                        to={sub.link}
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="block py-2 text-sm text-gray-600 hover:text-accent border-l-2 border-transparent hover:border-accent pl-2"
-                                      >
-                                        {sub.label}
-                                      </Link>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </motion.div>
+                                <span className={`font-medium ${mobileExpandedId === item.id ? 'text-accent' : 'text-gray-700'}`}>
+                                  {item.name}
+                                </span>
+                                <ChevronDown 
+                                  size={16} 
+                                  className={`transition-transform duration-200 text-gray-400 ${mobileExpandedId === item.id ? 'rotate-180 text-accent' : ''}`} 
+                                />
+                              </div>
+                            ) : (
+                              // Direct link if no subcategories
+                              <Link 
+                                to={`/gallery/${item.name}`}
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center justify-between py-3 text-gray-700 font-medium"
+                              >
+                                {item.name} <ChevronRight size={16} className="text-gray-300" />
+                              </Link>
                             )}
-                          </AnimatePresence>
-                        </li>
-                      ))}
+
+                            {/* Mobile Submenu Accordion */}
+                            <AnimatePresence>
+                              {mobileExpandedId === item.id && subCats.length > 0 && (
+                                <motion.div 
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden bg-gray-50 rounded-lg mb-2"
+                                >
+                                  <ul className="py-2 pl-4">
+                                    {subCats.map((sub) => (
+                                      <li key={sub.id}>
+                                        <Link 
+                                          to={`/gallery/${sub.name}`}
+                                          onClick={() => setIsMenuOpen(false)}
+                                          className="block py-2 text-sm text-gray-600 hover:text-accent border-l-2 border-transparent hover:border-accent pl-2"
+                                        >
+                                          {sub.name}
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                   
