@@ -120,7 +120,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return [...prev, { ...product, quantity: 1, selectedVariation: variation }];
     });
-    showToast('Added to Cart', 'success');
+    // Removed global toast showToast('Added to Cart', 'success'); as it is now handled by Navbar
   };
 
   const updateQuantity = (productId: string, quantity: number, variationId?: string) => {

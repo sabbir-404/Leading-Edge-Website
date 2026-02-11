@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus } from 'lucide-react';
+import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { MAIN_MENU_CATEGORIES, CATEGORIES, CURRENCY } from '../constants';
@@ -16,6 +16,20 @@ const Navbar: React.FC = () => {
   const [searchResults, setSearchResults] = useState<typeof products>([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Cart Toast State
+  const [showCartToast, setShowCartToast] = useState(false);
+  const prevItemCountRef = useRef(itemCount);
+
+  useEffect(() => {
+    // Show toast only when items increase (added to cart)
+    if (itemCount > prevItemCountRef.current) {
+      setShowCartToast(true);
+      const timer = setTimeout(() => setShowCartToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    prevItemCountRef.current = itemCount;
+  }, [itemCount]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -193,8 +207,23 @@ const Navbar: React.FC = () => {
                 )}
               </button>
 
+              {/* Add to Cart Toast - Near Icon */}
               <AnimatePresence>
-                {isCartHovered && (
+                {showCartToast && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, x: '-50%' }}
+                    animate={{ opacity: 1, y: 0, x: '-50%' }}
+                    exit={{ opacity: 0, y: 10, x: '-50%' }}
+                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-lg flex items-center gap-2 whitespace-nowrap z-[60]"
+                  >
+                    <Check size={14} className="text-green-400" />
+                    Added to Cart!
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {isCartHovered && !showCartToast && (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
