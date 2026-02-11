@@ -72,7 +72,7 @@ const Navbar: React.FC = () => {
           <div className="flex-shrink-0 cursor-pointer hidden md:block" onClick={() => navigate('/')}>
              {/* Replace the src below with your actual logo image path, e.g., src="/logo.png" */}
              <img 
-               src="https://placehold.co/200x50/ffffff/000000?text=LOGO+HERE" 
+               src="/Logo/logo black.png" 
                alt="Leading Edge" 
                className="h-10 w-auto object-contain" 
              />
@@ -82,7 +82,7 @@ const Navbar: React.FC = () => {
            <div className="flex-shrink-0 cursor-pointer md:hidden" onClick={() => navigate('/')}>
              {/* Replace the src below with your actual logo image path */}
              <img 
-               src="https://placehold.co/120x40/ffffff/000000?text=LOGO" 
+               src="/Logo/logo black.png" 
                alt="Leading Edge" 
                className="h-8 w-auto object-contain" 
              />
