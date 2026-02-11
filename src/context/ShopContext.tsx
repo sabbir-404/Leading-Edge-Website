@@ -43,6 +43,7 @@ interface ShopContextType {
   addCategory: (category: Category) => void;
   updateCategory: (category: Category) => void;
   deleteCategory: (categoryId: string) => void;
+  reorderCategories: (orderedIds: string[]) => void;
 
   // Project Actions
   addProject: (project: Project) => void;
@@ -251,6 +252,18 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showToast('Category deleted', 'info');
   };
 
+  const reorderCategories = (orderedIds: string[]) => {
+    setCategories(prev => {
+        const newCats = [...prev];
+        orderedIds.forEach((id, index) => {
+            const found = newCats.find(c => c.id === id);
+            if (found) found.order = index;
+        });
+        return newCats;
+    });
+    showToast('Categories reordered', 'success');
+  };
+
   // Project Actions
   const addProject = (project: Project) => {
     setProjects(prev => [...prev, project]);
@@ -346,7 +359,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       addToCart, removeFromCart, updateQuantity, clearCart, 
       login, logout, 
       addProduct, updateProduct, deleteProduct, deleteProductsBulk, updateProductsStatusBulk,
-      addCategory, updateCategory, deleteCategory,
+      addCategory, updateCategory, deleteCategory, reorderCategories,
       addProject, updateProject, deleteProject,
       updateSiteConfig,
       addCatalogue, updateCatalogue, deleteCatalogue,

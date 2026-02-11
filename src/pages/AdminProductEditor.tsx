@@ -10,7 +10,7 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 const AdminProductEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products, addProduct, updateProduct, shippingAreas, showToast } = useShop();
+  const { products, categories, addProduct, updateProduct, shippingAreas, showToast } = useShop();
   const [activeTab, setActiveTab] = useState('general');
   const [showPreview, setShowPreview] = useState(false);
 
@@ -164,7 +164,11 @@ const AdminProductEditor: React.FC = () => {
   };
   const removeShippingCharge = (idx: number) => setFormData(prev => ({ ...prev, specificShippingCharges: prev.specificShippingCharges?.filter((_, i) => i !== idx) }));
 
-  const availableCategories = ['Furniture', 'Light', 'Kitchenware', 'Hardware', 'Decor', 'Outdoor', 'Rugs', 'Bath'];
+  // Get available categories from context, filtered to main categories and sorted by order
+  const availableCategories = categories
+    .filter(c => !c.parentId)
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map(c => c.name);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -215,6 +219,7 @@ const AdminProductEditor: React.FC = () => {
                          <div>
                             <label className="block text-sm font-bold mb-2">Categories (Select All applicable)</label>
                             <div className="border rounded-lg p-3 max-h-40 overflow-y-auto bg-gray-50">
+                                {availableCategories.length === 0 ? <p className="text-gray-500 text-sm">No categories found.</p> : null}
                                 {availableCategories.map(c => (
                                     <label key={c} className="flex items-center gap-2 mb-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
                                         <div onClick={(e) => { e.preventDefault(); handleCategoryChange(c); }}>

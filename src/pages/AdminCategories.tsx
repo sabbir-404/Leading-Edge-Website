@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Category } from '../types';
-import { Plus, Edit, Trash2, Save, X, Image as ImageIcon, CornerDownRight } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Image as ImageIcon, CornerDownRight, GripVertical } from 'lucide-react';
 
 const AdminCategories: React.FC = () => {
-  const { categories, products, addCategory, updateCategory, deleteCategory } = useShop();
+  const { categories, products, addCategory, updateCategory, deleteCategory, reorderCategories } = useShop();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(null);
   
   // Form State
   const initialFormState: Category = {
@@ -65,12 +66,55 @@ const AdminCategories: React.FC = () => {
     }
   };
 
+  // Drag and Drop Handlers
+  const onDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedCategoryId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    // Small timeout to allow the ghost image to be created before we might modify DOM styling
+    setTimeout(() => {
+        // Optional: add dragging class if needed
+    }, 0);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const onDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedCategoryId || draggedCategoryId === targetId) {
+        setDraggedCategoryId(null);
+        return;
+    }
+
+    // Get current index of dragged and target in the sorted main categories list
+    const sourceIndex = mainCategories.findIndex(c => c.id === draggedCategoryId);
+    const targetIndex = mainCategories.findIndex(c => c.id === targetId);
+
+    if (sourceIndex === -1 || targetIndex === -1) {
+        setDraggedCategoryId(null);
+        return;
+    }
+
+    // Create new order array
+    const newOrder = [...mainCategories];
+    const [movedItem] = newOrder.splice(sourceIndex, 1);
+    newOrder.splice(targetIndex, 0, movedItem);
+
+    // Map to IDs
+    const orderedIds = newOrder.map(c => c.id);
+    
+    reorderCategories(orderedIds);
+    setDraggedCategoryId(null);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
             <h1 className="text-3xl font-bold text-gray-800">Categories</h1>
-            <p className="text-gray-500">Manage site navigation and product grouping</p>
+            <p className="text-gray-500">Manage site navigation, drag to reorder.</p>
         </div>
         <button onClick={handleCreate} className="bg-accent text-white px-4 py-2 rounded-lg flex items-center gap-2 font-bold shadow-lg">
           <Plus size={20} /> Add Category
@@ -162,6 +206,7 @@ const AdminCategories: React.FC = () => {
         <table className="w-full text-left">
             <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase text-xs font-bold tracking-wider">
                 <tr>
+                    <th className="p-4 w-10"></th>
                     <th className="p-4">Category Name</th>
                     <th className="p-4 text-center">Featured</th>
                     <th className="p-4 text-center">Products</th>
@@ -172,7 +217,16 @@ const AdminCategories: React.FC = () => {
                 {mainCategories.map(main => (
                     <React.Fragment key={main.id}>
                         {/* Main Category Row */}
-                        <tr className="hover:bg-gray-50 group">
+                        <tr 
+                            className={`hover:bg-gray-50 group transition-colors ${draggedCategoryId === main.id ? 'bg-gray-100 opacity-50' : ''}`}
+                            draggable
+                            onDragStart={(e) => onDragStart(e, main.id)}
+                            onDragOver={onDragOver}
+                            onDrop={(e) => onDrop(e, main.id)}
+                        >
+                            <td className="p-4 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+                                <GripVertical size={20} />
+                            </td>
                             <td className="p-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 overflow-hidden">
@@ -180,7 +234,6 @@ const AdminCategories: React.FC = () => {
                                     </div>
                                     <div>
                                         <div className="font-bold text-gray-800">{main.name}</div>
-                                        <div className="text-xs text-gray-400">Order: {main.order}</div>
                                     </div>
                                 </div>
                             </td>
@@ -201,6 +254,7 @@ const AdminCategories: React.FC = () => {
                         {/* Subcategories */}
                         {getSubCategories(main.id).map(sub => (
                             <tr key={sub.id} className="hover:bg-gray-50 bg-gray-50/30 group">
+                                <td className="p-4"></td>
                                 <td className="p-4 pl-12">
                                     <div className="flex items-center gap-2 text-gray-600">
                                         <CornerDownRight size={16} className="text-gray-400" />
@@ -227,6 +281,7 @@ const AdminCategories: React.FC = () => {
                 {/* Orphan Categories (if any) */}
                 {categories.filter(c => c.parentId && !categories.find(p => p.id === c.parentId)).map(orphan => (
                      <tr key={orphan.id} className="bg-red-50 hover:bg-red-100 group">
+                        <td className="p-4"></td>
                         <td className="p-4 pl-12 text-red-600 font-medium">
                             <div className="flex items-center gap-2">
                                 <span>{orphan.name}</span>
