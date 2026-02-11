@@ -15,6 +15,7 @@ const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<typeof products>([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Desktop Menu State
@@ -56,6 +57,9 @@ const Navbar: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchDropdown(false);
+        // Collapse the search bar animation if the user clicks outside and the query is empty
+        // or just always collapse on outside click to restore menu visibility
+        setIsSearchFocused(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -101,8 +105,8 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 h-16 md:h-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-4">
+      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 h-16 md:h-20 shadow-sm transition-all duration-300">
+        <div className={`max-w-7xl mx-auto h-full flex items-center justify-between gap-4 transition-all duration-500 ease-in-out ${isSearchFocused ? 'px-2' : 'px-4'}`}>
           
           <button 
             className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-primary"
@@ -112,7 +116,7 @@ const Navbar: React.FC = () => {
           </button>
 
           {/* Desktop Logo */}
-          <div className="flex-shrink-0 cursor-pointer hidden md:block" onClick={() => navigate('/')}>
+          <div className="flex-shrink-0 cursor-pointer hidden md:block transition-transform duration-300" onClick={() => navigate('/')}>
              <img 
                src="/Logo/logo black.png" 
                alt="Leading Edge" 
@@ -129,17 +133,26 @@ const Navbar: React.FC = () => {
              />
           </div>
 
-          <div className="flex-1 mx-2 md:mx-8 relative z-50 flex justify-end md:justify-center" ref={searchRef}>
-            <div className="relative group w-full max-w-[200px] md:max-w-md">
+          {/* Search Bar Container */}
+          <div 
+            className={`flex-1 relative z-50 flex justify-end md:justify-center transition-all duration-500 ease-in-out ${isSearchFocused ? 'mx-4' : 'mx-2 md:mx-8'}`} 
+            ref={searchRef}
+          >
+            <div className={`relative group transition-all duration-500 ease-in-out ${isSearchFocused ? 'w-full' : 'w-full max-w-[200px] md:max-w-md'}`}>
               <input 
                 type="text" 
                 value={searchQuery}
+                onFocus={() => setIsSearchFocused(true)}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchSubmit}
                 placeholder="Search..." 
-                className={`w-full bg-gray-50 border border-gray-200 rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all duration-300 ${searchQuery ? 'md:w-[500px]' : 'md:focus:w-[500px]'} shadow-sm`}
+                className={`w-full border rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none transition-all duration-500 ease-in-out shadow-sm
+                  ${isSearchFocused 
+                    ? 'bg-white border-accent ring-1 ring-accent/30 shadow-lg' 
+                    : 'bg-gray-50 border-gray-200 focus:border-accent focus:ring-1 focus:ring-accent'
+                  }`}
               />
-              <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-accent transition-colors" />
+              <Search size={18} className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${isSearchFocused ? 'text-accent' : 'text-gray-400 group-focus-within:text-accent'}`} />
             </div>
 
             {/* Search Dropdown */}
@@ -149,7 +162,7 @@ const Navbar: React.FC = () => {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden w-full md:w-[500px] mx-auto"
+                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden w-full mx-auto z-[60]"
                 >
                   {searchResults.length > 0 ? (
                     <ul>
@@ -161,6 +174,7 @@ const Navbar: React.FC = () => {
                             navigate(`/product/${result.id}`);
                             setShowSearchDropdown(false);
                             setSearchQuery('');
+                            setIsSearchFocused(false);
                           }}
                         >
                           <img src={result.image} alt={result.name} className="w-10 h-10 rounded object-cover" />
@@ -175,6 +189,7 @@ const Navbar: React.FC = () => {
                         onClick={() => {
                           navigate(`/search?q=${searchQuery}`);
                           setShowSearchDropdown(false);
+                          setIsSearchFocused(false);
                         }}
                       >
                         View all results for "{searchQuery}"
@@ -188,12 +203,12 @@ const Navbar: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Desktop Menu - Limited to 6 Items */}
-          <div className="hidden lg:flex items-center space-x-6 h-full">
+          {/* Desktop Menu - Limited to 6 Items. Fades out on search focus. */}
+          <div className={`hidden lg:flex items-center space-x-6 h-full transition-all duration-500 ease-in-out ${isSearchFocused ? 'w-0 opacity-0 overflow-hidden scale-95 translate-x-10' : 'w-auto opacity-100 scale-100 translate-x-0'}`}>
             {navItems.slice(0, 6).map((item) => (
               <div 
                 key={item.id} 
-                className="relative h-full flex items-center"
+                className="relative h-full flex items-center whitespace-nowrap"
                 onMouseEnter={() => setHoveredMenuId(item.id)}
                 onMouseLeave={() => setHoveredMenuId(null)}
               >
@@ -207,7 +222,7 @@ const Navbar: React.FC = () => {
 
                 {/* Dropdown Menu */}
                 <AnimatePresence>
-                  {hoveredMenuId === item.id && item.subCategories.length > 0 && (
+                  {hoveredMenuId === item.id && item.subCategories.length > 0 && !isSearchFocused && (
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -231,7 +246,7 @@ const Navbar: React.FC = () => {
             ))}
           </div>
 
-          <div className="flex items-center space-x-3 md:space-x-5 text-gray-600 flex-shrink-0">
+          <div className="flex items-center space-x-3 md:space-x-5 text-gray-600 flex-shrink-0 transition-all duration-300">
             <button 
               onClick={handleProfileClick}
               className="hidden md:block hover:text-accent transition-colors"
@@ -385,7 +400,6 @@ const Navbar: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {/* Note: Mobile menu shows ALL categories, unlike desktop */}
                   {navItems.map((item) => (
                     <div key={item.id} className="border-b border-gray-800/50 pb-2">
                       <div className="flex items-center justify-between">
