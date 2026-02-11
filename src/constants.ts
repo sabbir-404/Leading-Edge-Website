@@ -1,3 +1,4 @@
+
 import { Product, Category, Catalogue, SiteConfig, ShippingArea, ShippingMethod, CustomPage, User, Order, DashboardStats, Brand, Project } from './types';
 
 export const CURRENCY = '৳';
@@ -6,51 +7,42 @@ export const MAIN_MENU_CATEGORIES = ['Furniture', 'Light', 'Kitchenware', 'Hardw
 
 export const INITIAL_CATEGORIES: Category[] = [
   // Main Categories
-  { id: 'cat-light', name: 'Lighting', slug: 'Light', image: 'https://picsum.photos/seed/light/400/400', isFeatured: true, order: 1 },
-  { id: 'cat-furn', name: 'Furniture', slug: 'Furniture', image: 'https://picsum.photos/seed/furn/400/400', isFeatured: true, order: 2 },
-  { id: 'cat-kitchen', name: 'Kitchenware', slug: 'Kitchenware', image: 'https://picsum.photos/seed/kitchen/400/400', isFeatured: true, order: 3 },
-  { id: 'cat-wardrobe', name: 'Wardrobe', slug: 'Wardrobe', isFeatured: false, order: 4 },
-  { id: 'cat-hardware', name: 'Hardware', slug: 'Hardware', image: 'https://picsum.photos/seed/hard/400/400', isFeatured: true, order: 5 },
-  { id: 'cat-smart', name: 'Smart Appliances', slug: 'Smart Appliances', isFeatured: false, order: 6 },
-  { id: 'cat-sale', name: 'Sale', slug: 'sale', isFeatured: false, order: 99 },
-  { id: 'cat-decor', name: 'Decor', slug: 'Decor', image: 'https://picsum.photos/seed/decor/400/400', isFeatured: true, order: 7 },
-  { id: 'cat-outdoor', name: 'Outdoor', slug: 'Outdoor', image: 'https://picsum.photos/seed/out/400/400', isFeatured: true, order: 8 },
-  { id: 'cat-rugs', name: 'Rugs', slug: 'Rugs', image: 'https://picsum.photos/seed/rugs/400/400', isFeatured: true, order: 9 },
-  { id: 'cat-bath', name: 'Bath', slug: 'Bath', image: 'https://picsum.photos/seed/bath/400/400', isFeatured: true, order: 10 },
+  { id: '1', name: 'Furniture', image: 'https://picsum.photos/seed/furn/400/400', order: 1, isFeatured: true, slug: 'furniture' },
+  { id: '2', name: 'Light', image: 'https://picsum.photos/seed/light/400/400', order: 2, isFeatured: true, slug: 'light' },
+  { id: '3', name: 'Kitchenware', image: 'https://picsum.photos/seed/kitchen/400/400', order: 3, isFeatured: true, slug: 'kitchenware' },
+  { id: '4', name: 'Hardware', image: 'https://picsum.photos/seed/hard/400/400', order: 4, isFeatured: true, slug: 'hardware' },
+  { id: '5', name: 'Decor', image: 'https://picsum.photos/seed/decor/400/400', order: 6, isFeatured: true, slug: 'decor' },
+  { id: '6', name: 'Outdoor', image: 'https://picsum.photos/seed/out/400/400', order: 7, isFeatured: true, slug: 'outdoor' },
+  { id: '7', name: 'Rugs', image: 'https://picsum.photos/seed/rugs/400/400', order: 8, isFeatured: true, slug: 'rugs' },
+  { id: '8', name: 'Bath', image: 'https://picsum.photos/seed/bath/400/400', order: 9, isFeatured: true, slug: 'bath' },
+  { id: '9', name: 'Sale', image: 'https://picsum.photos/seed/sale/400/400', order: 5, isFeatured: true, slug: 'sale' },
 
-  // Sub Categories - Lighting
-  { id: 'sub-bulb', name: 'Bulb', slug: 'Bulb', parentId: 'cat-light' },
-  { id: 'sub-track', name: 'Track Light', slug: 'Track Light', parentId: 'cat-light' },
-  { id: 'sub-ceiling', name: 'Ceiling Light', slug: 'Ceiling Light', parentId: 'cat-light' },
-  { id: 'sub-chandelier', name: 'Chandelier', slug: 'Chandelier', parentId: 'cat-light' },
-  { id: 'sub-lamp', name: 'Lamp', slug: 'Lamp', parentId: 'cat-light' },
-  { id: 'sub-light-acc', name: 'Light Accessories', slug: 'Light Accessories', parentId: 'cat-light' },
-  { id: 'sub-linier', name: 'Linier Light', slug: 'Linier Light', parentId: 'cat-light' },
-  { id: 'sub-magnetic', name: 'Magnetic Light', slug: 'Magnetic Light', parentId: 'cat-light' },
-  { id: 'sub-outdoor-light', name: 'Outdoor Light', slug: 'Outdoor Light', parentId: 'cat-light' },
-  { id: 'sub-panel', name: 'Panel Light', slug: 'Panel Light', parentId: 'cat-light' },
-  { id: 'sub-pendent', name: 'Pendent Light', slug: 'Pendent Light', parentId: 'cat-light' },
+  // Subcategories - Furniture
+  { id: '1-1', name: 'Sofa', parentId: '1', slug: 'sofa' },
+  { id: '1-2', name: 'Bed', parentId: '1', slug: 'bed' },
+  { id: '1-3', name: 'Dining Table', parentId: '1', slug: 'dining-table' },
+  { id: '1-4', name: 'Chairs', parentId: '1', slug: 'chairs' },
+  { id: '1-5', name: 'Wardrobe', parentId: '1', slug: 'wardrobe' },
 
-  // Sub Categories - Furniture
-  { id: 'sub-sofa', name: 'Sofa', slug: 'Sofa', parentId: 'cat-furn' },
-  { id: 'sub-bed', name: 'Bed', slug: 'Bed', parentId: 'cat-furn' },
-  { id: 'sub-dining', name: 'Dining', slug: 'Dining', parentId: 'cat-furn' },
-  { id: 'sub-chairs', name: 'Chairs', slug: 'Chairs', parentId: 'cat-furn' },
-  { id: 'sub-tables', name: 'Tables', slug: 'Tables', parentId: 'cat-furn' },
+  // Subcategories - Light
+  { id: '2-1', name: 'Chandelier', parentId: '2', slug: 'chandelier' },
+  { id: '2-2', name: 'Ceiling Light', parentId: '2', slug: 'ceiling-light' },
+  { id: '2-3', name: 'Track Light', parentId: '2', slug: 'track-light' },
+  { id: '2-4', name: 'Wall Lamp', parentId: '2', slug: 'wall-lamp' },
+  { id: '2-5', name: 'Table Lamp', parentId: '2', slug: 'table-lamp' },
+  
+  // Subcategories - Kitchenware
+  { id: '3-1', name: 'Cutlery', parentId: '3', slug: 'cutlery' },
+  { id: '3-2', name: 'Cookware', parentId: '3', slug: 'cookware' },
+  { id: '3-3', name: 'Tableware', parentId: '3', slug: 'tableware' },
 
-  // Sub Categories - Kitchenware
-  { id: 'sub-cutlery', name: 'Cutlery', slug: 'Cutlery', parentId: 'cat-kitchen' },
-  { id: 'sub-cookware', name: 'Cookware', slug: 'Cookware', parentId: 'cat-kitchen' },
-  { id: 'sub-kitchen-acc', name: 'Accessories', slug: 'Kitchen Accessories', parentId: 'cat-kitchen' },
-
-  // Sub Categories - Wardrobe
-  { id: 'sub-walkin', name: 'Walk-in', slug: 'Walk-in Wardrobe', parentId: 'cat-wardrobe' },
-  { id: 'sub-sliding', name: 'Sliding', slug: 'Sliding Wardrobe', parentId: 'cat-wardrobe' },
-
-  // Sub Categories - Hardware
-  { id: 'sub-handles', name: 'Handles', slug: 'Handles', parentId: 'cat-hardware' },
-  { id: 'sub-hinges', name: 'Hinges', slug: 'Hinges', parentId: 'cat-hardware' },
+  // Subcategories - Hardware
+  { id: '4-1', name: 'Door Handles', parentId: '4', slug: 'door-handles' },
+  { id: '4-2', name: 'Locks', parentId: '4', slug: 'locks' },
+  { id: '4-3', name: 'Hinges', parentId: '4', slug: 'hinges' },
 ];
+
+export const CATEGORIES = INITIAL_CATEGORIES;
 
 export const INITIAL_CATALOGUES: Catalogue[] = [
   {

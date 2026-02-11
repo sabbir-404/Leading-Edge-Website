@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus, Check, ChevronDown } from 'lucide-react';
+import { Search, User, ShoppingBag, Menu, X, ChevronRight, LogOut, Trash2, Plus, Minus, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { CURRENCY } from '../constants';
@@ -20,6 +20,9 @@ const Navbar: React.FC = () => {
 
   // Desktop Menu State
   const [hoveredMenuId, setHoveredMenuId] = useState<string | null>(null);
+
+  // Mobile Menu State
+  const [mobileExpandedId, setMobileExpandedId] = useState<string | null>(null);
 
   // Cart Toast State
   const [showCartToast, setShowCartToast] = useState(false);
@@ -91,6 +94,14 @@ const Navbar: React.FC = () => {
     }
   };
 
+  const toggleMobileMenu = (id: string) => {
+    if (mobileExpandedId === id) {
+      setMobileExpandedId(null);
+    } else {
+      setMobileExpandedId(id);
+    }
+  };
+
   return (
     <>
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 h-16 md:h-20 shadow-sm transition-all duration-300">
@@ -112,8 +123,8 @@ const Navbar: React.FC = () => {
              />
           </div>
           
-          {/* Mobile Logo */}
-           <div className="flex-shrink-0 cursor-pointer md:hidden" onClick={() => navigate('/')}>
+          {/* Mobile Logo - Hidden as requested to increase search bar size */}
+           <div className="flex-shrink-0 cursor-pointer hidden" onClick={() => navigate('/')}>
              <img 
                src="/Logo/logo black.png" 
                alt="Leading Edge" 
@@ -123,10 +134,10 @@ const Navbar: React.FC = () => {
 
           {/* Search Bar Container */}
           <div 
-            className={`flex-1 relative z-50 flex justify-end md:justify-center transition-all duration-500 ease-in-out ${isSearchFocused ? 'mx-4' : 'mx-2 md:mx-8'}`} 
+            className={`flex-1 relative z-50 flex justify-center transition-all duration-500 ease-in-out ${isSearchFocused ? 'mx-2' : 'mx-2 md:mx-8'}`} 
             ref={searchRef}
           >
-            <div className={`relative group transition-all duration-500 ease-in-out ${isSearchFocused ? 'w-full' : 'w-full max-w-[200px] md:max-w-md'}`}>
+            <div className={`relative group w-full transition-all duration-500 ease-in-out ${isSearchFocused ? '' : 'md:max-w-md'}`}>
               <input 
                 type="text" 
                 value={searchQuery}
@@ -449,6 +460,19 @@ const Navbar: React.FC = () => {
                     </ul>
                   </div>
                   
+                  {/* Link to Projects Gallery */}
+                  <div className="border-b border-gray-100 pb-4">
+                      <div className="flex items-center justify-between">
+                        <Link 
+                          to="/projects"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="text-gray-700 font-medium py-1"
+                        >
+                          Our Projects
+                        </Link>
+                      </div>
+                  </div>
+
                   <div className="border-t border-gray-100 pt-6">
                      <ul className="space-y-3 text-sm text-gray-500">
                         <li><Link to="/profile" onClick={() => setIsMenuOpen(false)}>My Account</Link></li>

@@ -1,3 +1,4 @@
+
 export interface ProductVariation {
   id: string;
   type: string; // e.g., 'Color', 'Size'
@@ -50,11 +51,11 @@ export interface Product {
 export interface Category {
   id: string;
   name: string;
-  slug: string;
+  slug?: string;
   image?: string;
   parentId?: string | null;
-  isFeatured?: boolean; // For Home page grid
   order?: number;
+  isFeatured?: boolean;
 }
 
 export interface Catalogue {
