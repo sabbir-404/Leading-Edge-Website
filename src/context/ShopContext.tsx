@@ -64,14 +64,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Data States
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS); // Kept static for now
+  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [isLoading, setIsLoading] = useState(true);
 
   // Shopping State
   const [cart, setCart] = useState<CartItem[]>([]);
   const [user, setUser] = useState<User | null>(null);
   
-  // Admin Data States (Mocked for now, but should also come from API in production)
+  // Admin Data States
   const [users, setUsers] = useState<User[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(INITIAL_SITE_CONFIG);
@@ -87,13 +87,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // In a real scenario, you would fetch all these. 
-        // For this demo, we assume the backend is running.
-        // If fetch fails, we might want to fallback to constants or show error.
-        
         const [prodData, catData] = await Promise.all([
-          api.getProducts().catch(() => []), 
-          api.getCategories().catch(() => [])
+          api.getProducts().catch(err => { console.error(err); return []; }), 
+          api.getCategories().catch(err => { console.error(err); return []; })
         ]);
 
         if (prodData.length > 0) setProducts(prodData);
@@ -101,7 +97,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
       } catch (error) {
         console.error("Failed to fetch initial data", error);
-        showToast("Backend not connected. Using local data.", "error");
+        showToast("Backend connection failed.", "error");
       } finally {
         setIsLoading(false);
       }
@@ -186,12 +182,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Auth Logic
   const login = async (email: string) => {
     try {
-      // Real API Call
       const userData = await api.login(email);
       setUser(userData);
       showToast('Logged in successfully', 'success');
     } catch (e) {
-      // Fallback for demo
       const newUser: User = { 
         id: `u-${Date.now()}`, 
         name: email.split('@')[0], 
@@ -200,7 +194,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         joinDate: new Date().toISOString().split('T')[0]
       };
       setUser(newUser);
-      showToast('Logged in (Local Mode)', 'info');
+      showToast('Logged in (Local)', 'info');
     }
   };
 
@@ -209,48 +203,93 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showToast('Logged out', 'info');
   };
 
-  // --- CRUD Operations (Optimistic Updates for smoother UI) ---
+  // --- CRUD Operations ---
 
-  const addProduct = (product: Product) => {
-    setProducts(prev => [...prev, { ...product, id: product.id || `PROD-${Date.now()}` }]);
-    // In real app: await api.createProduct(product);
-    showToast('Product added successfully', 'success');
+  const addProduct = async (product: Product) => {
+    try {
+        // Ensure ID
+        const newProduct = { ...product, id: product.id || `PROD-${Date.now()}` };
+        // Optimistic Update
+        setProducts(prev => [...prev, newProduct]);
+        
+        await api.createProduct(newProduct);
+        showToast('Product added successfully', 'success');
+    } catch (e) {
+        showToast('Failed to save product', 'error');
+        console.error(e);
+        // Revert optimistic update? For simplicity, we keep it but warn user.
+    }
   };
   
-  const updateProduct = (product: Product) => {
-    setProducts(prev => prev.map(p => p.id === product.id ? product : p));
-    showToast('Product updated', 'success');
+  const updateProduct = async (product: Product) => {
+    try {
+        setProducts(prev => prev.map(p => p.id === product.id ? product : p));
+        await api.updateProduct(product);
+        showToast('Product updated', 'success');
+    } catch (e) {
+        showToast('Failed to update product', 'error');
+    }
   };
 
-  const deleteProduct = (productId: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
-    showToast('Product deleted', 'info');
+  const deleteProduct = async (productId: string) => {
+    try {
+        setProducts(prev => prev.filter(p => p.id !== productId));
+        await api.deleteProduct(productId);
+        showToast('Product deleted', 'info');
+    } catch (e) {
+        showToast('Failed to delete product', 'error');
+    }
   };
 
   const deleteProductsBulk = (productIds: string[]) => {
+    // Bulk delete API not implemented in backend yet, doing one by one or just UI update
     setProducts(prev => prev.filter(p => !productIds.includes(p.id)));
+    // Ideally loop and call API
+    productIds.forEach(id => api.deleteProduct(id).catch(console.error));
     showToast(`${productIds.length} products deleted`, 'info');
   };
 
   const updateProductsStatusBulk = (productIds: string[], isVisible: boolean) => {
-    setProducts(prev => prev.map(p => productIds.includes(p.id) ? { ...p, isVisible } : p));
+    setProducts(prev => prev.map(p => {
+        if (productIds.includes(p.id)) {
+            const updated = { ...p, isVisible };
+            api.updateProduct(updated).catch(console.error); // Update individually in background
+            return updated;
+        }
+        return p;
+    }));
     showToast('Statuses updated', 'success');
   };
 
   // Categories
-  const addCategory = (category: Category) => {
-    setCategories(prev => [...prev, category]);
-    showToast('Category added', 'success');
+  const addCategory = async (category: Category) => {
+    try {
+        setCategories(prev => [...prev, category]);
+        await api.createCategory(category);
+        showToast('Category added', 'success');
+    } catch (e) {
+        showToast('Failed to add category', 'error');
+    }
   };
 
-  const updateCategory = (category: Category) => {
-    setCategories(prev => prev.map(c => c.id === category.id ? category : c));
-    showToast('Category updated', 'success');
+  const updateCategory = async (category: Category) => {
+    try {
+        setCategories(prev => prev.map(c => c.id === category.id ? category : c));
+        await api.updateCategory(category);
+        showToast('Category updated', 'success');
+    } catch (e) {
+        showToast('Failed to update category', 'error');
+    }
   };
 
-  const deleteCategory = (categoryId: string) => {
-    setCategories(prev => prev.filter(c => c.id !== categoryId));
-    showToast('Category deleted', 'info');
+  const deleteCategory = async (categoryId: string) => {
+    try {
+        setCategories(prev => prev.filter(c => c.id !== categoryId));
+        await api.deleteCategory(categoryId);
+        showToast('Category deleted', 'info');
+    } catch (e) {
+        showToast('Failed to delete category', 'error');
+    }
   };
 
   const reorderCategories = (orderedIds: string[]) => {
@@ -258,32 +297,35 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const newCats = [...prev];
         orderedIds.forEach((id, index) => {
             const found = newCats.find(c => c.id === id);
-            if (found) found.order = index;
+            if (found) {
+                found.order = index;
+                api.updateCategory(found).catch(console.error); // Sync order to backend
+            }
         });
         return newCats;
     });
   };
 
-  // Projects
+  // Projects (Local State Only for now, backend not implemented in schema yet for projects)
   const addProject = (project: Project) => {
     setProjects(prev => [...prev, project]);
-    showToast('Project added', 'success');
+    showToast('Project added (Local Only)', 'success');
   };
 
   const updateProject = (project: Project) => {
     setProjects(prev => prev.map(p => p.id === project.id ? project : p));
-    showToast('Project updated', 'success');
+    showToast('Project updated (Local Only)', 'success');
   };
 
   const deleteProject = (projectId: string) => {
     setProjects(prev => prev.filter(p => p.id !== projectId));
-    showToast('Project deleted', 'info');
+    showToast('Project deleted (Local Only)', 'info');
   };
   
-  // Other Settings
+  // Other Settings (Local Only for now)
   const updateSiteConfig = (config: SiteConfig) => {
     setSiteConfig(config);
-    showToast('Configuration saved', 'success');
+    showToast('Configuration saved (Local Only)', 'success');
   };
 
   const addCatalogue = (catalogue: Catalogue) => {
@@ -331,7 +373,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const createOrder = async (order: Order) => {
     try {
-      // Send to Backend
       await api.createOrder(order);
       setOrders(prev => [order, ...prev]);
       setDashboardStats(prev => ({

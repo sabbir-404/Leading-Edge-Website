@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS products (
     model_number VARCHAR(100),
     image TEXT,
     is_visible BOOLEAN DEFAULT TRUE,
+    extra_data LONGTEXT, -- Stores JSON for variations, specs, features, weight, etc.
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -44,7 +45,7 @@ CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(255),
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255), -- For real auth
+    password_hash VARCHAR(255),
     role ENUM('admin', 'customer', 'moderator') DEFAULT 'customer',
     phone VARCHAR(50),
     address TEXT,
@@ -62,11 +63,3 @@ CREATE TABLE IF NOT EXISTS orders (
     payment_status VARCHAR(50) DEFAULT 'Unpaid',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Initial Categories Seed
-INSERT IGNORE INTO categories (id, name, slug, parent_id, is_featured, sort_order) VALUES
-('1', 'Furniture', 'furniture', NULL, TRUE, 1),
-('2', 'Light', 'light', NULL, TRUE, 2),
-('3', 'Kitchenware', 'kitchenware', NULL, TRUE, 3),
-('1-1', 'Sofa', 'sofa', '1', FALSE, 0),
-('1-2', 'Bed', 'bed', '1', FALSE, 0);
