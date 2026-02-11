@@ -15,6 +15,79 @@ export const CATEGORIES: Category[] = [
 
 export const MAIN_MENU_CATEGORIES = ['Furniture', 'Light', 'Kitchenware', 'Hardware', 'Sale'];
 
+export const NAVIGATION_STRUCTURE = [
+  {
+    id: 'lighting',
+    label: 'LIGHTING',
+    link: '/gallery/Light',
+    subCategories: [
+      { label: 'BULB', link: '/gallery/Light?type=Bulb' },
+      { label: 'TRACK LIGHT', link: '/gallery/Light?type=Track Light' },
+      { label: 'CEILING LIGHT', link: '/gallery/Light?type=Ceiling Light' },
+      { label: 'CHANDELIER', link: '/gallery/Light?type=Chandelier' },
+      { label: 'LAMP', link: '/gallery/Light?type=Lamp' },
+      { label: 'LIGHT ACCESSORIES', link: '/gallery/Light?type=Accessories' },
+      { label: 'LINIER LIGHT', link: '/gallery/Light?type=Linier' },
+      { label: 'MAGNETIC LIGHT', link: '/gallery/Light?type=Magnetic' },
+      { label: 'OUTDOOR LIGHT', link: '/gallery/Light?type=Outdoor' },
+      { label: 'PANEL LIGHT', link: '/gallery/Light?type=Panel' },
+      { label: 'PENDENT LIGHT', link: '/gallery/Light?type=Pendent' },
+    ]
+  },
+  {
+    id: 'furniture',
+    label: 'FURNITURE',
+    link: '/gallery/Furniture',
+    subCategories: [
+      { label: 'SOFA', link: '/gallery/Furniture?type=Sofa' },
+      { label: 'BED', link: '/gallery/Furniture?type=Bed' },
+      { label: 'DINING', link: '/gallery/Furniture?type=Dining' },
+      { label: 'CHAIRS', link: '/gallery/Furniture?type=Chairs' },
+      { label: 'TABLES', link: '/gallery/Furniture?type=Tables' },
+    ]
+  },
+  {
+    id: 'kitchenware',
+    label: 'KITCHENWARE',
+    link: '/gallery/Kitchenware',
+    subCategories: [
+        { label: 'CUTLERY', link: '/gallery/Kitchenware?type=Cutlery' },
+        { label: 'COOKWARE', link: '/gallery/Kitchenware?type=Cookware' },
+        { label: 'ACCESSORIES', link: '/gallery/Kitchenware?type=Accessories' },
+    ]
+  },
+  {
+    id: 'wardrobe',
+    label: 'WARDROBE',
+    link: '/gallery/Wardrobe',
+    subCategories: [
+        { label: 'WALK-IN', link: '/gallery/Wardrobe?type=Walk-in' },
+        { label: 'SLIDING', link: '/gallery/Wardrobe?type=Sliding' },
+    ]
+  },
+  {
+    id: 'hardware',
+    label: 'HARDWARE',
+    link: '/gallery/Hardware',
+    subCategories: [
+        { label: 'HANDLES', link: '/gallery/Hardware?type=Handles' },
+        { label: 'HINGES', link: '/gallery/Hardware?type=Hinges' },
+    ]
+  },
+  {
+    id: 'smart-appliances',
+    label: 'SMART APPLIANCES',
+    link: '/gallery/Smart Appliances',
+    subCategories: []
+  },
+  {
+    id: 'sale',
+    label: 'SALE',
+    link: '/gallery/sale',
+    subCategories: []
+  }
+];
+
 export const INITIAL_CATALOGUES: Catalogue[] = [
   {
     id: 'cat-2024-spring',
