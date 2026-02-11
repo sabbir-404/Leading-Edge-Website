@@ -188,8 +188,9 @@ const Navbar: React.FC = () => {
             </AnimatePresence>
           </div>
 
+          {/* Desktop Menu - Limited to 6 Items */}
           <div className="hidden lg:flex items-center space-x-6 h-full">
-            {navItems.map((item) => (
+            {navItems.slice(0, 6).map((item) => (
               <div 
                 key={item.id} 
                 className="relative h-full flex items-center"
@@ -384,6 +385,7 @@ const Navbar: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
+                  {/* Note: Mobile menu shows ALL categories, unlike desktop */}
                   {navItems.map((item) => (
                     <div key={item.id} className="border-b border-gray-800/50 pb-2">
                       <div className="flex items-center justify-between">
