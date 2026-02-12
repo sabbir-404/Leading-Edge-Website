@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
@@ -20,11 +21,7 @@ const Admin: React.FC = () => {
   // Derived Products
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
 
-  useEffect(() => {
-    if (!user || !user.email.includes('admin')) {
-      navigate('/admin/login');
-    }
-  }, [user, navigate]);
+  // Note: Redundant useEffect for auth removed. RequireAuth handles this.
 
   useEffect(() => {
     let result = products;
@@ -79,7 +76,7 @@ const Admin: React.FC = () => {
     setSelectedIds([]);
   };
 
-  if (!user || !user.email.includes('admin')) return null;
+  if (!user || user.role !== 'admin') return null;
 
   const categories = ['All', ...Array.from(new Set(products.flatMap(p => p.categories)))];
 

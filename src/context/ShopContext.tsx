@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue, ToastMessage, Category, Project } from '../types';
 import { INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_STATS, INITIAL_PROJECTS } from '../constants';
 import { api } from '../services/api';
+import { setCookie, getCookie, eraseCookie } from '../utils/cookieUtils';
 
 interface ShopContextType {
   products: Product[];
@@ -70,9 +71,12 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Shopping State
   const [cart, setCart] = useState<CartItem[]>([]);
   
-  // Auth State - Initialize from localStorage immediately to prevent flicker
+  // Auth State - Initialize from Cookie or LocalStorage
   const [user, setUser] = useState<User | null>(() => {
     try {
+      const cookieUser = getCookie('furniture_user');
+      if (cookieUser) return JSON.parse(decodeURIComponent(cookieUser));
+      
       const storedUser = localStorage.getItem('furniture_user');
       return storedUser ? JSON.parse(storedUser) : null;
     } catch (error) {
@@ -210,7 +214,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const userData = await api.login(email, password);
       setUser(userData);
+      // Sync both LocalStorage and Cookie
       localStorage.setItem('furniture_user', JSON.stringify(userData));
+      setCookie('furniture_user', encodeURIComponent(JSON.stringify(userData)), 7); // 7 days
+      
       showToast('Logged in successfully', 'success');
     } catch (e: any) {
       showToast(e.message || 'Login failed', 'error');
@@ -221,6 +228,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setUser(null);
     localStorage.removeItem('furniture_user');
+    eraseCookie('furniture_user');
     showToast('Logged out', 'info');
   };
 

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -8,11 +9,16 @@ import { ArrowLeft, Calendar, User } from 'lucide-react';
 const ProjectDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { projects } = useShop();
+  const { projects, isLoading } = useShop();
   
   const project = projects.find(p => p.id === id);
 
-  if (!project) return <div className="min-h-screen flex items-center justify-center">Project not found</div>;
+  if (isLoading && !project) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+
+  if (!project) return <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+      <h2 className="text-xl font-bold">Project not found</h2>
+      <button onClick={() => navigate('/projects')} className="text-accent hover:underline">Back to Projects</button>
+  </div>;
 
   return (
     <div className="min-h-screen bg-white">
@@ -49,13 +55,15 @@ const ProjectDetails: React.FC = () => {
             <p>{project.description}</p>
          </div>
 
-         <div className="grid grid-cols-1 gap-8">
-            {project.images.map((img, idx) => (
-               <div key={idx} className="rounded-xl overflow-hidden shadow-sm bg-gray-100">
-                  <img src={img} alt={`Project detail ${idx + 1}`} className="w-full h-auto" />
-               </div>
-            ))}
-         </div>
+         {project.images && project.images.length > 0 && (
+             <div className="grid grid-cols-1 gap-8">
+                {project.images.map((img, idx) => (
+                   <div key={idx} className="rounded-xl overflow-hidden shadow-sm bg-gray-100">
+                      <img src={img} alt={`Project detail ${idx + 1}`} className="w-full h-auto" />
+                   </div>
+                ))}
+             </div>
+         )}
       </div>
 
       <Footer />

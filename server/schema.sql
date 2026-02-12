@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT,
     short_description TEXT,
     model_number VARCHAR(100),
-    image TEXT,
+    image LONGTEXT, -- Changed to LONGTEXT
     is_visible BOOLEAN DEFAULT TRUE,
     extra_data LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS product_categories (
 CREATE TABLE IF NOT EXISTS product_images (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id VARCHAR(50),
-    image_url TEXT,
+    image_url LONGTEXT, -- Changed to LONGTEXT
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     product_name VARCHAR(255),
     quantity INT,
     price DECIMAL(10, 2),
-    image TEXT,
+    image LONGTEXT, -- Changed to LONGTEXT
     selected_variation LONGTEXT, -- Stores JSON of variation
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS projects (
     id VARCHAR(50) PRIMARY KEY,
     title VARCHAR(255),
     description TEXT,
-    cover_image TEXT,
+    cover_image LONGTEXT, -- Changed to LONGTEXT
     client VARCHAR(255),
     completion_date VARCHAR(50),
     images LONGTEXT
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS shipping_methods (
 CREATE TABLE IF NOT EXISTS newsletter_campaigns (
     id VARCHAR(50) PRIMARY KEY,
     subject VARCHAR(255),
-    content TEXT,
+    content LONGTEXT, -- Changed to LONGTEXT
     sent_date DATE,
     recipient_count INT,
     status VARCHAR(50)
