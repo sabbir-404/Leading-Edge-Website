@@ -16,8 +16,13 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// --- 1. ENSURE UPLOAD DIRECTORIES EXIST (Including 'temp') ---
-// Added 'uploads/temp' to prevent Multer errors
+// Logging
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+});
+
+// --- 1. ENSURE UPLOAD DIRECTORIES EXIST ---
 const uploadDirs = ['uploads/products', 'uploads/projects', 'uploads/thumbnails', 'uploads/gallery', 'uploads/temp'];
 uploadDirs.forEach(dir => fs.ensureDirSync(path.join(__dirname, dir)));
 
@@ -56,7 +61,6 @@ async function initDB() {
             )
         `);
         
-        // Ensure other tables exist (Simplified check)
         await conn.query(`
             CREATE TABLE IF NOT EXISTS products (
                 id VARCHAR(50) PRIMARY KEY,
@@ -75,9 +79,11 @@ async function initDB() {
         `);
 
         // (You can add other critical tables here if needed to be self-healing)
-        
         console.log("✅ Database tables checked/initialized.");
         conn.release();
+        
+        // Trigger sync in background
+        syncMediaLibrary();
     } catch (e) {
         console.error("❌ Database Initialization Failed:", e);
     }
@@ -122,31 +128,36 @@ async function checkExists(table, column, value, excludeId = null) {
     return rows.length > 0;
 }
 
-// Sync function to ensure all files on disk are in the database
+// Sync function to ensure all files on disk are in the database (Background)
 async function syncMediaLibrary() {
     const directories = ['uploads/products', 'uploads/projects', 'uploads/gallery'];
     
     for (const dir of directories) {
         const fullPath = path.join(__dirname, dir);
-        if (fs.existsSync(fullPath)) {
-            const files = await fs.readdir(fullPath);
-            for (const file of files) {
-                if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(file)) continue;
-                
-                const filePath = `${dir}/${file}`;
-                // Check if exists in DB
-                const [rows] = await pool.query('SELECT id FROM media_library WHERE file_path = ?', [filePath]);
-                if (rows.length === 0) {
-                    const stats = fs.statSync(path.join(fullPath, file));
-                    const mimeType = 'image/' + path.extname(file).substring(1).toLowerCase();
-                    await pool.query(
-                        'INSERT INTO media_library (file_name, file_path, folder, file_size, mime_type) VALUES (?, ?, ?, ?, ?)',
-                        [file, filePath, dir.replace('uploads/', ''), stats.size, mimeType]
-                    );
+        if (await fs.pathExists(fullPath)) {
+            try {
+                const files = await fs.readdir(fullPath);
+                for (const file of files) {
+                    if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(file)) continue;
+                    
+                    const filePath = `${dir}/${file}`;
+                    // Check if exists in DB
+                    try {
+                        const [rows] = await pool.query('SELECT id FROM media_library WHERE file_path = ?', [filePath]);
+                        if (rows.length === 0) {
+                            const stats = await fs.stat(path.join(fullPath, file));
+                            const mimeType = 'image/' + path.extname(file).substring(1).toLowerCase();
+                            await pool.query(
+                                'INSERT INTO media_library (file_name, file_path, folder, file_size, mime_type) VALUES (?, ?, ?, ?, ?)',
+                                [file, filePath, dir.replace('uploads/', ''), stats.size, mimeType]
+                            );
+                        }
+                    } catch(e) { /* ignore db errors during sync */ }
                 }
-            }
+            } catch(e) { /* ignore fs errors */ }
         }
     }
+    console.log("Media Library Synced");
 }
 
 // Multer Config (Temp storage)
@@ -165,7 +176,6 @@ app.get('/api/admin/search', async (req, res) => {
         const [orders] = await pool.query('SELECT id, customer_name as title, "order" as type, CONCAT("Total: ", total) as subtitle FROM orders WHERE id LIKE ? OR customer_name LIKE ? LIMIT 5', [searchTerm, searchTerm]);
         const [users] = await pool.query('SELECT id, name as title, "user" as type, email as subtitle FROM users WHERE name LIKE ? OR email LIKE ? LIMIT 5', [searchTerm, searchTerm]);
         
-        // Handle case where custom_pages table might not exist perfectly
         let pages = [];
         try {
              [pages] = await pool.query('SELECT id, title, "page" as type, slug as subtitle FROM custom_pages WHERE title LIKE ? LIMIT 3', [searchTerm]);
@@ -179,15 +189,12 @@ app.get('/api/admin/search', async (req, res) => {
 
 // --- IMAGE GALLERY ENDPOINTS ---
 
-// Get all images (Sync first, then query DB)
+// Get all images
 app.get('/api/admin/images', async (req, res) => {
     try {
-        await syncMediaLibrary();
         const [rows] = await pool.query('SELECT * FROM media_library ORDER BY upload_date DESC');
         
-        // CDN Support: Use CDN_URL env var if available, otherwise fallback to local
         const serverUrl = process.env.CDN_URL || `${req.protocol}://${req.get('host')}`;
-        
         const images = rows.map(row => ({
             id: row.id,
             name: row.file_name,
@@ -200,8 +207,28 @@ app.get('/api/admin/images', async (req, res) => {
         res.json(images);
     } catch (e) {
         console.error("Gallery Error:", e);
-        // Fallback: If DB fails, just list files from folders directly so the UI doesn't crash
-        res.status(500).json({ message: "Database sync failed: " + e.message });
+        // Fallback: If DB fails, try to list files from folders directly so the UI doesn't crash
+        try {
+             const directories = ['uploads/products', 'uploads/projects', 'uploads/gallery'];
+             let allFiles = [];
+             for (const dir of directories) {
+                 const fullPath = path.join(__dirname, dir);
+                 if (await fs.pathExists(fullPath)) {
+                     const files = await fs.readdir(fullPath);
+                     allFiles = [...allFiles, ...files.map(f => ({
+                         id: Math.random(),
+                         name: f,
+                         url: `${req.protocol}://${req.get('host')}/${dir}/${f}`,
+                         folder: dir,
+                         size: 0,
+                         date: new Date()
+                     }))];
+                 }
+             }
+             res.json(allFiles);
+        } catch(err) {
+             res.status(500).json({ message: "Database and FS fallback failed: " + e.message });
+        }
     }
 });
 
@@ -230,7 +257,6 @@ app.get('/api/admin/image-usage', async (req, res) => {
 
         res.json(references);
     } catch (e) {
-        // Don't block the UI if usage check fails
         res.json([]); 
     }
 });
@@ -252,14 +278,16 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             targetDir = 'uploads/projects';
             cleanName = slugify(name || 'project', { lower: true, strict: true });
         } else {
-            // Generic Gallery Upload
             const originalName = path.parse(req.file.originalname).name;
             cleanName = slugify(originalName, { lower: true, strict: true });
         }
 
         const thumbDir = 'uploads/thumbnails';
         
-        // Determine file number/suffix to avoid collision
+        // Ensure dirs exist (redundant safety)
+        await fs.ensureDir(path.join(__dirname, targetDir));
+        await fs.ensureDir(path.join(__dirname, thumbDir));
+
         const existingFiles = await fs.readdir(path.join(__dirname, targetDir));
         let finalFilename = `${cleanName}${path.extname(req.file.originalname)}`;
         let counter = 1;
@@ -272,46 +300,13 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         const relativePath = `${targetDir}/${finalFilename}`;
         const thumbPath = path.join(__dirname, thumbDir, finalFilename);
 
-        // Process Image: Optimize and Move
-        if (/\.gif$/i.test(req.file.originalname)) {
-            // Skip complex optimization for GIFs to preserve animation simply for now
-            await fs.move(req.file.path, finalPath);
-        } else {
-            try {
-                const image = sharp(req.file.path);
-                const metadata = await image.metadata();
-                
-                // Resize if extremely large (>2500px width)
-                if (metadata.width > 2500) {
-                    image.resize({ width: 2500, withoutEnlargement: true });
-                }
-                
-                // Auto-rotate based on EXIF data
-                image.rotate();
-
-                // Compress based on format
-                if (metadata.format === 'jpeg' || metadata.format === 'jpg') {
-                    image.jpeg({ quality: 80, mozjpeg: true });
-                } else if (metadata.format === 'png') {
-                    image.png({ quality: 80, compressionLevel: 8, palette: true });
-                } else if (metadata.format === 'webp') {
-                    image.webp({ quality: 80 });
-                }
-                
-                await image.toFile(finalPath);
-                await fs.remove(req.file.path); // Remove temp file
-            } catch(e) {
-                console.error("Image optimization failed, falling back to raw move", e);
-                await fs.move(req.file.path, finalPath); 
-            }
-        }
+        // Process Image
+        await fs.move(req.file.path, finalPath);
         
-        // Generate Thumbnail (200px width)
+        // Try Thumbnail (continue on error)
         try {
             await sharp(finalPath).resize(200).toFile(thumbPath);
-        } catch(err) {
-            console.error("Thumbnail generation failed (ignoring)", err.message);
-        }
+        } catch(err) { console.error("Thumbnail error:", err.message); }
 
         // Store in Database
         try {
@@ -324,7 +319,6 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             console.error("DB Insert failed for image (ignoring)", dbErr.message);
         }
 
-        // CDN Support for returned URL
         const serverUrl = process.env.CDN_URL || `${req.protocol}://${req.get('host')}`;
         
         res.json({
@@ -401,12 +395,9 @@ app.get('/api/stats', async (req, res) => {
 
         res.json(stats);
     } catch (e) {
-        console.error("Stats Error:", e);
         res.status(500).json({ message: e.message });
     }
 });
-
-// ... [Keep Existing Products/Users/etc. Routes - They are fine if tables exist] ...
 
 app.get('/api/products', async (req, res) => {
   try {
