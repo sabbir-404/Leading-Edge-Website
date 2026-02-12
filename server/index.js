@@ -73,6 +73,33 @@ async function checkExists(table, column, value, excludeId = null) {
     return rows.length > 0;
 }
 
+// Sync function to ensure all files on disk are in the database
+async function syncMediaLibrary() {
+    const directories = ['uploads/products', 'uploads/projects', 'uploads/gallery'];
+    const serverUrl = 'http://localhost:' + PORT; // Approximation for relative paths logic
+
+    for (const dir of directories) {
+        const fullPath = path.join(__dirname, dir);
+        if (fs.existsSync(fullPath)) {
+            const files = await fs.readdir(fullPath);
+            for (const file of files) {
+                if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(file)) continue;
+                
+                const filePath = `${dir}/${file}`;
+                // Check if exists in DB
+                const [rows] = await pool.query('SELECT id FROM media_library WHERE file_path = ?', [filePath]);
+                if (rows.length === 0) {
+                    const stats = fs.statSync(path.join(fullPath, file));
+                    await pool.query(
+                        'INSERT INTO media_library (file_name, file_path, folder, file_size, mime_type) VALUES (?, ?, ?, ?, ?)',
+                        [file, filePath, dir.replace('uploads/', ''), stats.size, 'image/' + path.extname(file).substring(1)]
+                    );
+                }
+            }
+        }
+    }
+}
+
 // Multer Config (Temp storage)
 const upload = multer({ dest: 'uploads/temp/' });
 
@@ -98,30 +125,23 @@ app.get('/api/admin/search', async (req, res) => {
 
 // --- IMAGE GALLERY ENDPOINTS ---
 
-// Get all images from filesystem
+// Get all images (Sync first, then query DB)
 app.get('/api/admin/images', async (req, res) => {
     try {
-        const directories = ['uploads/products', 'uploads/projects', 'uploads/gallery'];
-        let allImages = [];
-        const serverUrl = `${req.protocol}://${req.get('host')}`;
-
-        for (const dir of directories) {
-            const fullPath = path.join(__dirname, dir);
-            if (fs.existsSync(fullPath)) {
-                const files = await fs.readdir(fullPath);
-                const images = files.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file)).map(file => ({
-                    name: file,
-                    url: `${serverUrl}/${dir}/${file}`,
-                    folder: dir.replace('uploads/', ''),
-                    path: dir
-                }));
-                allImages = [...allImages, ...images];
-            }
-        }
+        await syncMediaLibrary();
+        const [rows] = await pool.query('SELECT * FROM media_library ORDER BY upload_date DESC');
         
-        // Sort by name (or stats if we read file stats)
-        allImages.sort((a, b) => b.name.localeCompare(a.name));
-        res.json(allImages);
+        const serverUrl = `${req.protocol}://${req.get('host')}`;
+        const images = rows.map(row => ({
+            id: row.id,
+            name: row.file_name,
+            url: `${serverUrl}/${row.file_path}`,
+            folder: row.folder,
+            size: row.file_size,
+            date: row.upload_date
+        }));
+        
+        res.json(images);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -138,7 +158,7 @@ app.get('/api/admin/image-usage', async (req, res) => {
     const references = [];
 
     try {
-        // Check Products
+        // Check Products (Main image and Gallery images)
         const [products] = await pool.query('SELECT id, name FROM products WHERE image LIKE ? OR images LIKE ?', [searchTerm, searchTerm]);
         products.forEach(p => references.push({ type: 'Product', id: p.id, name: p.name }));
 
@@ -173,7 +193,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             targetDir = 'uploads/projects';
             cleanName = slugify(name || 'project', { lower: true, strict: true });
         } else {
-            // Generic Gallery Upload - keep original name but safe
+            // Generic Gallery Upload
             const originalName = path.parse(req.file.originalname).name;
             cleanName = slugify(originalName, { lower: true, strict: true });
         }
@@ -182,7 +202,6 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         
         // Determine file number/suffix to avoid collision
         const existingFiles = await fs.readdir(path.join(__dirname, targetDir));
-        // Simple collision avoidance
         let finalFilename = `${cleanName}${path.extname(req.file.originalname)}`;
         let counter = 1;
         while (existingFiles.includes(finalFilename)) {
@@ -191,25 +210,29 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         }
         
         const finalPath = path.join(__dirname, targetDir, finalFilename);
+        const relativePath = `${targetDir}/${finalFilename}`;
         const thumbPath = path.join(__dirname, thumbDir, finalFilename);
 
         // Process Image: Move original
         await fs.move(req.file.path, finalPath);
         
-        // Generate Thumbnail (200px width)
+        // Generate Thumbnail (200px width) - optional, failures logged
         try {
-            await sharp(finalPath)
-            .resize(200)
-            .toFile(thumbPath);
+            await sharp(finalPath).resize(200).toFile(thumbPath);
         } catch(err) {
-            // Fail silently on thumbnail, not critical
             console.error("Thumbnail generation failed", err);
         }
+
+        // Store in Database
+        await pool.query(
+            'INSERT INTO media_library (file_name, file_path, folder, file_size, mime_type) VALUES (?, ?, ?, ?, ?)',
+            [finalFilename, relativePath, targetDir.replace('uploads/', ''), req.file.size, req.file.mimetype]
+        );
 
         const serverUrl = `${req.protocol}://${req.get('host')}`;
         
         res.json({
-            url: `${serverUrl}/${targetDir}/${finalFilename}`,
+            url: `${serverUrl}/${relativePath}`,
             thumbnailUrl: `${serverUrl}/${thumbDir}/${finalFilename}`
         });
 
@@ -280,10 +303,6 @@ app.get('/api/stats', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
-
-// [All other existing endpoints: products, categories, users, projects, config, pages, orders, shipping, newsletters, auth - KEEP AS IS]
-// For brevity, assuming the rest of the file remains identical to previous version.
-// ...
 
 app.get('/api/products', async (req, res) => {
   try {
@@ -426,9 +445,6 @@ app.post('/api/auth/login', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ... Include other endpoints like Categories, Projects, Config, Pages, Orders, Shipping, Newsletters etc. ...
-// For the sake of this prompt, assume they are present.
-
 app.get('/api/projects', async (req, res) => {
     const [rows] = await pool.query('SELECT * FROM projects');
     res.json(rows.map(r => ({ id: r.id, title: r.title, description: r.description, coverImage: r.cover_image, client: r.client, date: r.completion_date, images: JSON.parse(r.images || '[]') })));
@@ -456,8 +472,6 @@ app.delete('/api/projects/:id', async (req, res) => {
     await pool.query('DELETE FROM projects WHERE id=?', [req.params.id]);
     res.json({message: 'Deleted'});
 });
-
-// ... [Truncated to save space, but assuming logic holds]
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

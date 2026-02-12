@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { GalleryImage, ImageReference } from '../types';
-import { Search, Upload, X, Copy, Image as ImageIcon, Loader, Info } from 'lucide-react';
+import { Search, Upload, X, Copy, Image as ImageIcon, Loader, Info, Trash2 } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 const AdminGallery: React.FC = () => {
@@ -128,8 +128,9 @@ const AdminGallery: React.FC = () => {
                     onClick={() => setSelectedImage(img)}
                  >
                     <img src={img.url} alt={img.name} className="w-full h-full object-cover" loading="lazy" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                        <p className="text-white text-xs truncate w-full">{img.name}</p>
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                        <p className="text-white text-xs truncate w-full font-medium">{img.name}</p>
+                        <p className="text-gray-300 text-[10px] truncate w-full">{(img.size / 1024).toFixed(1)} KB</p>
                     </div>
                  </div>
              ))}
@@ -149,7 +150,10 @@ const AdminGallery: React.FC = () => {
                   {/* Details Panel */}
                   <div className="w-full md:w-96 bg-white border-l p-6 overflow-y-auto">
                       <div className="flex justify-between items-start mb-6">
-                          <h3 className="font-bold text-lg text-gray-800 break-all">{selectedImage.name}</h3>
+                          <div>
+                              <h3 className="font-bold text-lg text-gray-800 break-all">{selectedImage.name}</h3>
+                              <p className="text-xs text-gray-500 mt-1">Uploaded: {new Date(selectedImage.date).toLocaleDateString()}</p>
+                          </div>
                           <button onClick={() => setSelectedImage(null)} className="text-gray-400 hover:text-gray-600"><X /></button>
                       </div>
 

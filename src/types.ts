@@ -242,10 +242,12 @@ export interface AuditLogEntry {
 }
 
 export interface GalleryImage {
+    id?: number;
     name: string;
     url: string;
     folder: string;
-    path: string;
+    size: number;
+    date: string;
 }
 
 export interface ImageReference {

@@ -140,6 +140,16 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     action_type VARCHAR(50),
     target_id VARCHAR(50),
     details TEXT,
-    changes LONGTEXT, -- Stores JSON diff of before/after
+    changes LONGTEXT, 
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS media_library (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    file_name VARCHAR(255),
+    file_path TEXT,
+    folder VARCHAR(50),
+    file_size INT,
+    mime_type VARCHAR(50),
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
