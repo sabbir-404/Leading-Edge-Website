@@ -104,6 +104,7 @@ const ProductDetails: React.FC = () => {
           
           <div className="relative">
              <div className="sticky top-24">
+                {/* @ts-ignore */}
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

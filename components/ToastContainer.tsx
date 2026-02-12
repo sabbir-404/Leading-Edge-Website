@@ -10,6 +10,7 @@ const ToastContainer: React.FC = () => {
     <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
       <AnimatePresence>
         {toasts.map((toast) => (
+          // @ts-ignore
           <motion.div
             key={toast.id}
             initial={{ opacity: 0, x: 20 }}

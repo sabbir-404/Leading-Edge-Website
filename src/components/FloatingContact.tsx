@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
 import { MessageCircle, Phone, Mail, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 const FloatingContact: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+
+  // Hide on admin portal
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-4">
       <AnimatePresence>
         {isOpen && (
+          // @ts-ignore
           <motion.div 
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

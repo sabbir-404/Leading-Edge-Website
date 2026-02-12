@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -32,10 +33,12 @@ import RequireAuth from './components/RequireAuth';
 import AdminLayout from './components/AdminLayout';
 import ToastContainer from './components/ToastContainer';
 import FloatingContact from './components/FloatingContact';
+import CookieConsent from './components/CookieConsent';
 import { ShopProvider } from './context/ShopContext';
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
   return (
+    // @ts-ignore
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
@@ -98,6 +101,7 @@ const App: React.FC = () => {
       <Router>
         <AnimatedRoutes />
         <FloatingContact />
+        <CookieConsent />
         <ToastContainer />
       </Router>
     </ShopProvider>

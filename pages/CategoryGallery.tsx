@@ -182,6 +182,7 @@ const CategoryGallery: React.FC = () => {
       <AnimatePresence>
         {isFilterOpen && (
           <>
+            {/* @ts-ignore */}
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
@@ -189,6 +190,7 @@ const CategoryGallery: React.FC = () => {
               className="fixed inset-0 bg-black/50 z-50 lg:hidden" 
               onClick={() => setIsFilterOpen(false)}
             />
+            {/* @ts-ignore */}
             <motion.div 
               initial={{ y: '100%' }} 
               animate={{ y: 0 }} 

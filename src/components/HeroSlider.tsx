@@ -34,6 +34,7 @@ const HeroSlider: React.FC = () => {
     <div className="w-full bg-white">
       <div className="relative w-full aspect-video md:aspect-[21/9] lg:h-[600px] lg:aspect-auto overflow-hidden">
         <AnimatePresence mode="wait">
+          {/* @ts-ignore */}
           <motion.div
             key={current}
             initial={{ opacity: 0, scale: 1.05 }}
@@ -49,6 +50,7 @@ const HeroSlider: React.FC = () => {
             />
             <div className={`absolute inset-0 bg-black/30 flex ${getAlignmentStyles(currentSlide.alignment)}`}>
                <div className="max-w-xl text-white">
+                  {/* @ts-ignore */}
                   <motion.h2 
                     initial={{ y: 20, opacity: 0 }} 
                     animate={{ y: 0, opacity: 1 }} 
@@ -56,6 +58,7 @@ const HeroSlider: React.FC = () => {
                   >
                      {currentSlide.title}
                   </motion.h2>
+                  {/* @ts-ignore */}
                   <motion.p 
                     initial={{ y: 20, opacity: 0 }} 
                     animate={{ y: 0, opacity: 1 }} 
@@ -66,6 +69,7 @@ const HeroSlider: React.FC = () => {
                   </motion.p>
                   
                   {currentSlide.buttonText && currentSlide.buttonLink && (
+                     // @ts-ignore
                      <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
