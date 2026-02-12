@@ -14,13 +14,14 @@ const AdminProductEditor: React.FC = () => {
   const { products, categories, addProduct, updateProduct, shippingAreas, showToast } = useShop();
   const [activeTab, setActiveTab] = useState('general');
   const [showPreview, setShowPreview] = useState(false);
+  const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   
   // Related Products Search State
   const [relatedSearch, setRelatedSearch] = useState('');
   const [isRelatedSearchFocused, setIsRelatedSearchFocused] = useState(false);
 
   // Initial State
-  const [formData, setFormData] = useState<Product>({
+  const initialFormData: Product = {
     id: `PROD-${Date.now()}`,
     name: '',
     categories: ['Furniture'],
@@ -39,7 +40,9 @@ const AdminProductEditor: React.FC = () => {
     weight: 0,
     specificShippingCharges: [],
     relatedProducts: [] 
-  });
+  };
+
+  const [formData, setFormData] = useState<Product>(initialFormData);
 
   // Local state for adding variations
   const [newVarType, setNewVarType] = useState('Color');
@@ -84,9 +87,21 @@ const AdminProductEditor: React.FC = () => {
     
     if (id === 'new') {
       addProduct(formData);
+      setLastSavedId(formData.id);
     } else {
       updateProduct(formData);
     }
+  };
+
+  const handleAddNew = () => {
+      setFormData({
+          ...initialFormData,
+          id: `PROD-${Date.now()}`
+      });
+      setLastSavedId(null);
+      // Reset navigation if we were on 'new', essentially resetting state.
+      // If we were on an edit page, we should navigate to 'new'
+      navigate('/admin/product/new', { replace: true });
   };
 
   // Grouped Variations Logic
@@ -181,6 +196,14 @@ const AdminProductEditor: React.FC = () => {
             <ArrowLeft size={20} className="mr-2" /> Back to Products
           </button>
           <div className="flex gap-4">
+             {lastSavedId && (
+                 <button 
+                    onClick={handleAddNew} 
+                    className="px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg font-bold hover:bg-blue-100 flex items-center gap-2 transition-all animate-pulse"
+                 >
+                    <Plus size={18} /> Add Another Product
+                 </button>
+             )}
              <button onClick={() => setShowPreview(true)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 flex items-center gap-2">
                <Eye size={18} /> Preview
              </button>

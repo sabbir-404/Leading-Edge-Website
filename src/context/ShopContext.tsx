@@ -25,7 +25,7 @@ interface ShopContextType {
   clearCart: () => void;
   cartTotal: number;
   itemCount: number;
-  login: (email: string, password?: string) => void;
+  login: (email: string, password?: string) => Promise<void>;
   logout: () => void;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
@@ -69,7 +69,16 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Shopping State
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [user, setUser] = useState<User | null>(null);
+  
+  // Auth State - Initialize from localStorage immediately to prevent flicker
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const storedUser = localStorage.getItem('furniture_user');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+      return null;
+    }
+  });
   
   // Admin Data States
   const [users, setUsers] = useState<User[]>([]);
@@ -84,9 +93,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Initial Data Fetch
   useEffect(() => {
-    const storedUser = localStorage.getItem('furniture_user');
-    if (storedUser) setUser(JSON.parse(storedUser));
-
     const fetchData = async () => {
       try {
         setIsLoading(true);
@@ -118,7 +124,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
       } catch (error) {
         console.error("Failed to fetch initial data", error);
-        showToast("Backend connection failed.", "error");
+        showToast("Backend connection failed. Using cached/mock data where available.", "error");
       } finally {
         setIsLoading(false);
       }
@@ -208,6 +214,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       showToast('Logged in successfully', 'success');
     } catch (e: any) {
       showToast(e.message || 'Login failed', 'error');
+      throw e;
     }
   };
 
@@ -438,7 +445,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await api.createOrder(order);
       setOrders(prev => [order, ...prev]);
-      // Update local stats optimistically
       setDashboardStats(prev => ({
           ...prev,
           totalOrdersMonth: prev.totalOrdersMonth + 1,

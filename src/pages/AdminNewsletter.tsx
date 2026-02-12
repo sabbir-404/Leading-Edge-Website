@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
-import { Mail, Send, Users, CheckCircle } from 'lucide-react';
+import { Mail, Send, Users, CheckCircle, Code } from 'lucide-react';
 
 const AdminNewsletter: React.FC = () => {
   const { users, sendNewsletter, newsletters } = useShop();
@@ -61,10 +62,15 @@ const AdminNewsletter: React.FC = () => {
                    </div>
 
                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Email Content</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-2">
+                          Email Content
+                          <span className="text-[10px] font-normal text-gray-400 flex items-center gap-1 border border-gray-300 px-2 py-0.5 rounded">
+                              <Code size={10} /> HTML Supported
+                          </span>
+                      </label>
                       <textarea 
                         className="w-full border p-3 rounded-lg h-64 font-mono text-sm" 
-                        placeholder="Write your newsletter content here (HTML supported in real implementation)..."
+                        placeholder="<html><body><h1>Hello!</h1><p>Write your newsletter content here...</p></body></html>"
                         value={content}
                         onChange={e => setContent(e.target.value)}
                       />

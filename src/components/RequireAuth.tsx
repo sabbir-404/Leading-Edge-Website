@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
@@ -8,8 +9,13 @@ interface RequireAuthProps {
 }
 
 const RequireAuth: React.FC<RequireAuthProps> = ({ children, adminOnly = false }) => {
-  const { user } = useShop();
+  const { user, isLoading } = useShop();
   const location = useLocation();
+
+  // If loading and no user yet, show nothing or a spinner to prevent premature redirect
+  if (isLoading && !user) {
+      return <div className="h-screen w-full flex items-center justify-center">Loading...</div>;
+  }
 
   if (!user) {
     if (adminOnly) {
