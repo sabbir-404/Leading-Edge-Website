@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT,
     short_description TEXT,
     model_number VARCHAR(100),
-    image LONGTEXT, -- Changed to LONGTEXT
+    image LONGTEXT, 
     is_visible BOOLEAN DEFAULT TRUE,
     extra_data LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS product_categories (
 CREATE TABLE IF NOT EXISTS product_images (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id VARCHAR(50),
-    image_url LONGTEXT, -- Changed to LONGTEXT
+    image_url LONGTEXT, 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255),
-    role ENUM('admin', 'customer', 'moderator') DEFAULT 'customer',
+    role ENUM('admin', 'customer', 'moderator', 'customer_service') DEFAULT 'customer',
     phone VARCHAR(50),
     address TEXT,
     join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -83,8 +83,8 @@ CREATE TABLE IF NOT EXISTS order_items (
     product_name VARCHAR(255),
     quantity INT,
     price DECIMAL(10, 2),
-    image LONGTEXT, -- Changed to LONGTEXT
-    selected_variation LONGTEXT, -- Stores JSON of variation
+    image LONGTEXT, 
+    selected_variation LONGTEXT, 
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS projects (
     id VARCHAR(50) PRIMARY KEY,
     title VARCHAR(255),
     description TEXT,
-    cover_image LONGTEXT, -- Changed to LONGTEXT
+    cover_image LONGTEXT, 
     client VARCHAR(255),
     completion_date VARCHAR(50),
     images LONGTEXT
@@ -121,14 +121,14 @@ CREATE TABLE IF NOT EXISTS shipping_methods (
     type VARCHAR(50),
     flat_rate DECIMAL(10, 2),
     is_global BOOLEAN DEFAULT TRUE,
-    area_ids LONGTEXT, -- JSON Array
-    weight_rates LONGTEXT -- JSON Array
+    area_ids LONGTEXT, 
+    weight_rates LONGTEXT 
 );
 
 CREATE TABLE IF NOT EXISTS newsletter_campaigns (
     id VARCHAR(50) PRIMARY KEY,
     subject VARCHAR(255),
-    content LONGTEXT, -- Changed to LONGTEXT
+    content LONGTEXT, 
     sent_date DATE,
     recipient_count INT,
     status VARCHAR(50)
@@ -140,5 +140,6 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     action_type VARCHAR(50),
     target_id VARCHAR(50),
     details TEXT,
+    changes LONGTEXT, -- Stores JSON diff of before/after
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

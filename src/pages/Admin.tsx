@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trash2, Edit, Plus, Eye, EyeOff, Search, CheckSquare, Square } from 'lucide-react';
 import { Product } from '../types';
 import { CURRENCY } from '../constants';
+import { hasPermission, PERMISSIONS } from '../utils/permissionUtils';
 
 const Admin: React.FC = () => {
   const { user, products, deleteProduct, updateProduct, deleteProductsBulk, updateProductsStatusBulk } = useShop();
@@ -20,8 +21,6 @@ const Admin: React.FC = () => {
 
   // Derived Products
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
-
-  // Note: Redundant useEffect for auth removed. RequireAuth handles this.
 
   useEffect(() => {
     let result = products;
@@ -76,7 +75,12 @@ const Admin: React.FC = () => {
     setSelectedIds([]);
   };
 
-  if (!user || user.role !== 'admin') return null;
+  // Permission Check for Admin Access handled by RequireAuth wrapper, 
+  // but specific actions need checks here.
+  const canDelete = hasPermission(user, PERMISSIONS.DELETE_PRODUCTS);
+  const canEdit = hasPermission(user, PERMISSIONS.MANAGE_PRODUCTS);
+
+  if (!user) return null;
 
   const categories = ['All', ...Array.from(new Set(products.flatMap(p => p.categories)))];
 
@@ -87,12 +91,14 @@ const Admin: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-800">Products Inventory</h1>
           <p className="text-gray-500">Manage catalogue, pricing, and availability.</p>
         </div>
-        <button 
-          onClick={() => navigate('/admin/product/new')}
-          className="bg-accent text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-orange-600 font-bold shadow-lg shadow-orange-200"
-        >
-          <Plus size={20} /> Add Product
-        </button>
+        {canEdit && (
+            <button 
+            onClick={() => navigate('/admin/product/new')}
+            className="bg-accent text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-orange-600 font-bold shadow-lg shadow-orange-200"
+            >
+            <Plus size={20} /> Add Product
+            </button>
+        )}
       </div>
 
       {/* Filters Bar */}
@@ -134,7 +140,9 @@ const Admin: React.FC = () => {
            <div className="flex gap-2">
               <button onClick={() => handleBulkStatus(true)} className="px-3 py-1 bg-white border border-blue-200 text-blue-600 rounded hover:bg-blue-100 text-sm font-medium">Show Selected</button>
               <button onClick={() => handleBulkStatus(false)} className="px-3 py-1 bg-white border border-blue-200 text-blue-600 rounded hover:bg-blue-100 text-sm font-medium">Hide Selected</button>
-              <button onClick={handleBulkDelete} className="px-3 py-1 bg-red-100 border border-red-200 text-red-600 rounded hover:bg-red-200 text-sm font-medium">Delete Selected</button>
+              {canDelete && (
+                  <button onClick={handleBulkDelete} className="px-3 py-1 bg-red-100 border border-red-200 text-red-600 rounded hover:bg-red-200 text-sm font-medium">Delete Selected</button>
+              )}
            </div>
         </div>
       )}
@@ -198,20 +206,24 @@ const Admin: React.FC = () => {
                 </td>
                 <td className="p-4 text-right">
                   <div className="flex justify-end gap-2">
-                    <button 
-                      onClick={() => navigate(`/admin/product/${p.id}`)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-100 transition-all"
-                      title="Edit"
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button 
-                      onClick={() => deleteProduct(p.id)} 
-                      className="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition-all"
-                      title="Delete"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    {canEdit && (
+                        <button 
+                        onClick={() => navigate(`/admin/product/${p.id}`)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-100 transition-all"
+                        title="Edit"
+                        >
+                        <Edit size={18} />
+                        </button>
+                    )}
+                    {canDelete && (
+                        <button 
+                        onClick={() => deleteProduct(p.id)} 
+                        className="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition-all"
+                        title="Delete"
+                        >
+                        <Trash2 size={18} />
+                        </button>
+                    )}
                   </div>
                 </td>
               </tr>

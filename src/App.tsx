@@ -29,6 +29,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminCatalogues from './pages/AdminCatalogues';
 import AdminNewsletter from './pages/AdminNewsletter';
 import AdminHeaderFooter from './pages/AdminHeaderFooter';
+import AdminGallery from './pages/AdminGallery';
 import RequireAuth from './components/RequireAuth';
 import AdminLayout from './components/AdminLayout';
 import ToastContainer from './components/ToastContainer';
@@ -89,6 +90,7 @@ const AnimatedRoutes = () => {
            <Route path="catalogues" element={<AdminCatalogues />} />
            <Route path="newsletter" element={<AdminNewsletter />} />
            <Route path="header-footer" element={<AdminHeaderFooter />} />
+           <Route path="gallery" element={<AdminGallery />} />
         </Route>
       </Routes>
     </AnimatePresence>

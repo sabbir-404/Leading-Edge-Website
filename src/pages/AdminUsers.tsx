@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
-import { User } from '../types';
-import { Search, Mail, Phone, MapPin, Package, UserPlus, Edit, Save, X, Lock } from 'lucide-react';
+import { User, UserRole } from '../types';
+import { Search, Mail, Phone, MapPin, Package, UserPlus, Edit, Save, X, ShieldAlert } from 'lucide-react';
 import { CURRENCY } from '../constants';
+import { hasPermission, PERMISSIONS } from '../utils/permissionUtils';
 
 const AdminUsers: React.FC = () => {
-  const { users, orders, updateUser, addUser } = useShop();
+  const { users, orders, updateUser, addUser, user: currentUser } = useShop();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [search, setSearch] = useState('');
   
@@ -16,10 +17,16 @@ const AdminUsers: React.FC = () => {
   // Form State
   const [formData, setFormData] = useState<User>({id:'', name:'', email:'', role:'customer', joinDate: '', phone: '', address: '', password: ''});
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(search.toLowerCase()) || 
-    u.email.toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter Logic: If logged in user is admin, show all. If not, hide admins.
+  const visibleUsers = users.filter(u => {
+      // Basic Search
+      const matchesSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
+      
+      // Visibility Check: Only Admins can see other Admins
+      const isHiddenAdmin = u.role === 'admin' && currentUser?.role !== 'admin';
+      
+      return matchesSearch && !isHiddenAdmin;
+  });
 
   const userOrders = selectedUser ? orders.filter(o => o.userId === selectedUser.id || o.customerEmail === selectedUser.email) : [];
 
@@ -30,12 +37,21 @@ const AdminUsers: React.FC = () => {
 
   const handleStartEdit = () => {
     if (selectedUser) {
-        setFormData({ ...selectedUser, password: '' }); // Clear password for edit
+        // Permission check for editing
+        if (!hasPermission(currentUser, PERMISSIONS.MANAGE_USERS)) {
+            alert("You do not have permission to edit users.");
+            return;
+        }
+        setFormData({ ...selectedUser, password: '' }); 
         setMode('edit');
     }
   };
 
   const handleStartAdd = () => {
+      if (!hasPermission(currentUser, PERMISSIONS.MANAGE_USERS)) {
+          alert("You do not have permission to create users.");
+          return;
+      }
       setFormData({
           id: '',
           name: '',
@@ -57,6 +73,11 @@ const AdminUsers: React.FC = () => {
           addUser(newUser);
           setSelectedUser(newUser);
       } else if (mode === 'edit') {
+          // Prevent non-admins from promoting themselves or others to admin
+          if (formData.role === 'admin' && currentUser?.role !== 'admin') {
+              alert("Only Super Admins can assign the Admin role.");
+              return;
+          }
           updateUser(formData);
           setSelectedUser(formData);
       }
@@ -70,7 +91,9 @@ const AdminUsers: React.FC = () => {
         <div className="p-4 border-b">
            <div className="flex justify-between items-center mb-4">
               <h2 className="font-bold text-lg">Users</h2>
-              <button onClick={handleStartAdd} className="text-accent hover:bg-gray-100 p-2 rounded"><UserPlus size={20}/></button>
+              {hasPermission(currentUser, PERMISSIONS.MANAGE_USERS) && (
+                  <button onClick={handleStartAdd} className="text-accent hover:bg-gray-100 p-2 rounded"><UserPlus size={20}/></button>
+              )}
            </div>
            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
@@ -83,7 +106,7 @@ const AdminUsers: React.FC = () => {
            </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-           {filteredUsers.map(user => (
+           {visibleUsers.map(user => (
              <div 
                 key={user.id} 
                 onClick={() => handleSelectUser(user)}
@@ -91,7 +114,13 @@ const AdminUsers: React.FC = () => {
              >
                 <h3 className="font-bold text-gray-800">{user.name}</h3>
                 <p className="text-xs text-gray-500">{user.email}</p>
-                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded mt-2 inline-block ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>{user.role}</span>
+                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded mt-2 inline-block 
+                    ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 
+                      user.role === 'moderator' ? 'bg-blue-100 text-blue-700' :
+                      user.role === 'customer_service' ? 'bg-orange-100 text-orange-700' :
+                      'bg-gray-100 text-gray-600'}`}>
+                    {user.role.replace('_', ' ')}
+                </span>
              </div>
            ))}
         </div>
@@ -134,14 +163,30 @@ const AdminUsers: React.FC = () => {
                         <label className="block text-sm font-bold text-gray-700 mb-1">Address</label>
                         <textarea className="w-full border p-3 rounded h-24" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                     </div>
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Role</label>
-                        <select className="w-full border p-3 rounded bg-white" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as any})}>
+                    
+                    {/* Role Selection - Protected */}
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                            <ShieldAlert size={16} /> Role Assignment
+                        </label>
+                        <select 
+                            className="w-full border p-3 rounded bg-white" 
+                            value={formData.role} 
+                            onChange={e => setFormData({...formData, role: e.target.value as UserRole})}
+                            disabled={currentUser?.role !== 'admin' && formData.role === 'admin'} // Prevent editing if not admin
+                        >
                             <option value="customer">Customer</option>
+                            <option value="customer_service">Customer Service</option>
                             <option value="moderator">Moderator</option>
-                            <option value="admin">Admin</option>
+                            {currentUser?.role === 'admin' && <option value="admin">Administrator</option>}
                         </select>
+                        <p className="text-xs text-gray-500 mt-2">
+                            <strong>Moderator:</strong> Can edit products & content. <br/>
+                            <strong>Customer Service:</strong> Can view orders & users. <br/>
+                            <strong>Admin:</strong> Full access.
+                        </p>
                     </div>
+
                     <div className="flex gap-4 pt-4">
                         <button onClick={handleSave} className="flex-1 bg-accent text-white py-3 rounded font-bold flex items-center justify-center gap-2">
                             <Save size={18} /> Save User
@@ -164,9 +209,11 @@ const AdminUsers: React.FC = () => {
                    </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                   <button onClick={handleStartEdit} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded font-medium">
-                        <Edit size={14} /> Edit Profile
-                   </button>
+                   {hasPermission(currentUser, PERMISSIONS.MANAGE_USERS) && (
+                       <button onClick={handleStartEdit} className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded font-medium">
+                            <Edit size={14} /> Edit Profile
+                       </button>
+                   )}
                    <span className="text-xs text-gray-400 mt-2">Joined: {selectedUser.joinDate}</span>
                 </div>
              </div>

@@ -73,6 +73,8 @@ export interface CartItem extends Product {
   selectedVariation?: ProductVariation;
 }
 
+export type UserRole = 'admin' | 'moderator' | 'customer_service' | 'customer';
+
 export interface User {
   id: string;
   name: string;
@@ -80,7 +82,7 @@ export interface User {
   password?: string; 
   phone?: string;
   address?: string;
-  role: 'admin' | 'moderator' | 'customer';
+  role: UserRole;
   joinDate: string;
 }
 
@@ -175,7 +177,7 @@ export interface DashboardStats {
   totalVisitsMonth: number;
   revenueMonth: number;
   trendingProducts: { productId: string; name: string; sales: number }[];
-  recentActivity: string[];
+  recentActivity: string[]; // Legacy simple string array
 }
 
 export interface HeaderFooterConfig {
@@ -220,4 +222,34 @@ export interface ToastMessage {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info';
+}
+
+export interface SearchResult {
+  id: string;
+  title: string;
+  type: 'product' | 'order' | 'user' | 'page';
+  subtitle?: string;
+}
+
+export interface AuditLogEntry {
+  id: number;
+  admin_email: string;
+  action_type: string;
+  target_id: string;
+  details: string;
+  changes?: Record<string, { from: any; to: any }>;
+  timestamp: string;
+}
+
+export interface GalleryImage {
+    name: string;
+    url: string;
+    folder: string;
+    path: string;
+}
+
+export interface ImageReference {
+    type: 'Product' | 'Project' | 'Category';
+    id: string;
+    name: string;
 }

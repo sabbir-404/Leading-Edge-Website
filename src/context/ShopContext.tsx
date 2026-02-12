@@ -1,9 +1,10 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue, ToastMessage, Category, Project } from '../types';
+import { Product, CartItem, User, Order, SiteConfig, ShippingArea, ShippingMethod, CustomPage, DashboardStats, NewsletterCampaign, Catalogue, ToastMessage, Category, Project, SearchResult, AuditLogEntry } from '../types';
 import { INITIAL_SITE_CONFIG, INITIAL_SHIPPING_AREAS, INITIAL_SHIPPING_METHODS, INITIAL_PAGES, MOCK_STATS, INITIAL_PROJECTS } from '../constants';
 import { api } from '../services/api';
 import { setCookie, getCookie, eraseCookie } from '../utils/cookieUtils';
+import { hasPermission, Permission } from '../utils/permissionUtils';
 
 interface ShopContextType {
   products: Product[];
@@ -18,6 +19,7 @@ interface ShopContextType {
   shippingAreas: ShippingArea[];
   shippingMethods: ShippingMethod[];
   dashboardStats: DashboardStats;
+  auditLogs: AuditLogEntry[];
   newsletters: NewsletterCampaign[];
   toasts: ToastMessage[];
   addToCart: (product: Product, variation?: any) => void;
@@ -28,6 +30,8 @@ interface ShopContextType {
   itemCount: number;
   login: (email: string, password?: string) => Promise<void>;
   logout: () => void;
+  checkPermission: (permission: Permission) => boolean;
+  performGlobalSearch: (query: string) => Promise<SearchResult[]>;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   deleteProduct: (productId: string) => void;
@@ -92,6 +96,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [shippingAreas, setShippingAreas] = useState<ShippingArea[]>(INITIAL_SHIPPING_AREAS);
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>(INITIAL_SHIPPING_METHODS);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>(MOCK_STATS);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [newsletters, setNewsletters] = useState<NewsletterCampaign[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -100,7 +105,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [prodData, catData, userData, projData, configData, pagesData, ordersData, statsData, shipAreas, shipMethods, newsData] = await Promise.all([
+        const [prodData, catData, userData, projData, configData, pagesData, ordersData, statsData, logsData, shipAreas, shipMethods, newsData] = await Promise.all([
           api.getProducts().catch(err => []), 
           api.getCategories().catch(err => []),
           api.getUsers().catch(err => []),
@@ -109,6 +114,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           api.getPages().catch(err => []),
           api.getOrders().catch(err => []),
           api.getStats().catch(err => MOCK_STATS),
+          api.getAuditLogs().catch(err => []),
           api.getShippingAreas().catch(err => []),
           api.getShippingMethods().catch(err => []),
           api.getNewsletters().catch(err => [])
@@ -122,6 +128,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (pagesData.length > 0) setCustomPages(pagesData);
         if (ordersData.length > 0) setOrders(ordersData);
         if (statsData) setDashboardStats(statsData);
+        if (logsData) setAuditLogs(logsData);
         if (shipAreas.length > 0) setShippingAreas(shipAreas);
         if (shipMethods.length > 0) setShippingMethods(shipMethods);
         if (newsData.length > 0) setNewsletters(newsData);
@@ -214,10 +221,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const userData = await api.login(email, password);
       setUser(userData);
-      // Sync both LocalStorage and Cookie
       localStorage.setItem('furniture_user', JSON.stringify(userData));
-      setCookie('furniture_user', encodeURIComponent(JSON.stringify(userData)), 7); // 7 days
-      
+      setCookie('furniture_user', encodeURIComponent(JSON.stringify(userData)), 7); 
       showToast('Logged in successfully', 'success');
     } catch (e: any) {
       showToast(e.message || 'Login failed', 'error');
@@ -230,6 +235,19 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('furniture_user');
     eraseCookie('furniture_user');
     showToast('Logged out', 'info');
+  };
+
+  const checkPermission = (permission: Permission) => {
+      return hasPermission(user, permission);
+  };
+
+  const performGlobalSearch = async (query: string) => {
+      try {
+          return await api.globalSearch(query);
+      } catch (e) {
+          console.error(e);
+          return [];
+      }
   };
 
   // --- CRUD Operations ---
@@ -476,9 +494,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return (
     <ShopContext.Provider value={{ 
       products, categories, projects, cart, user, users, orders, siteConfig, customPages, shippingAreas, shippingMethods,
-      dashboardStats, newsletters, toasts, isLoading,
+      dashboardStats, auditLogs, newsletters, toasts, isLoading,
       addToCart, removeFromCart, updateQuantity, clearCart, 
       login, logout, 
+      checkPermission, performGlobalSearch,
       addProduct, updateProduct, deleteProduct, deleteProductsBulk, updateProductsStatusBulk,
       addCategory, updateCategory, deleteCategory, reorderCategories,
       addProject, updateProject, deleteProject,

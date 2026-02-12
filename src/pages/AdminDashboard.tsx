@@ -1,14 +1,15 @@
+
 import React from 'react';
 import { useShop } from '../context/ShopContext';
-import { ShoppingCart, Users, DollarSign, TrendingUp, Bell } from 'lucide-react';
+import { ShoppingCart, Users, DollarSign, TrendingUp, Bell, Activity } from 'lucide-react';
 import { CURRENCY } from '../constants';
 
 const AdminDashboard: React.FC = () => {
-  const { dashboardStats, orders } = useShop();
+  const { dashboardStats, orders, auditLogs } = useShop();
 
   // Simple CSS-based Bar Chart Component
   const SimpleBarChart = ({ data }: { data: { label: string; value: number }[] }) => {
-    const maxValue = Math.max(...data.map(d => d.value));
+    const maxValue = Math.max(...data.map(d => d.value)) || 1;
     return (
       <div className="flex items-end gap-2 h-40 w-full mt-4">
         {data.map((item, idx) => (
@@ -88,16 +89,31 @@ const AdminDashboard: React.FC = () => {
              <SimpleBarChart data={dashboardStats.trendingProducts.map(p => ({ label: p.name, value: p.sales }))} />
           </div>
 
-          {/* Activity Feed */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-             <h3 className="font-bold text-lg mb-6">Recent Activity</h3>
+          {/* Live Activity Feed */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 max-h-[400px] overflow-y-auto">
+             <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><Activity size={20} className="text-accent"/> Live Activity Feed</h3>
              <div className="space-y-4">
-                {dashboardStats.recentActivity.map((activity, idx) => (
-                   <div key={idx} className="flex items-start gap-3 text-sm pb-4 border-b last:border-0 border-gray-100">
-                      <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0"></div>
-                      <p className="text-gray-600">{activity}</p>
+                {auditLogs.map((log) => (
+                   <div key={log.id} className="flex items-start gap-3 text-sm pb-4 border-b last:border-0 border-gray-100 group">
+                      <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0 group-hover:scale-125 transition-transform"></div>
+                      <div className="flex-1">
+                          <p className="text-gray-800 font-medium">
+                              <span className="text-accent">{log.admin_email.split('@')[0]}</span> {log.action_type.replace(/_/g, ' ').toLowerCase()}
+                          </p>
+                          {log.changes && Object.keys(log.changes).length > 0 && (
+                              <div className="mt-1 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                                  {Object.entries(log.changes).map(([key, val]) => (
+                                      <div key={key}>
+                                          <span className="font-bold">{key}:</span> {String(val.from).substring(0, 20)} &rarr; {String(val.to).substring(0, 20)}
+                                      </div>
+                                  ))}
+                              </div>
+                          )}
+                          <p className="text-xs text-gray-400 mt-1">{new Date(log.timestamp).toLocaleString()}</p>
+                      </div>
                    </div>
                 ))}
+                {auditLogs.length === 0 && <p className="text-gray-400 text-center">No recent activity.</p>}
              </div>
           </div>
        </div>

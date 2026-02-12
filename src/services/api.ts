@@ -11,7 +11,8 @@ const getHeaders = () => {
     if (userStr) {
         try {
             const user = JSON.parse(userStr);
-            if (user.role === 'admin') {
+            // Pass admin email for logging
+            if (user.role !== 'customer') {
                 // @ts-ignore
                 h['x-admin-email'] = user.email;
             }
@@ -29,15 +30,21 @@ const handleResponse = async (response: Response) => {
 };
 
 export const api = {
-  // Stats
+  // Stats & Logs & Search
   getStats: () => fetch(`${API_URL}/stats`, { headers: getHeaders() }).then(handleResponse),
+  getAuditLogs: () => fetch(`${API_URL}/audit-logs`, { headers: getHeaders() }).then(handleResponse),
+  globalSearch: (query: string) => fetch(`${API_URL}/admin/search?q=${query}`, { headers: getHeaders() }).then(handleResponse),
+
+  // Gallery
+  getImages: () => fetch(`${API_URL}/admin/images`, { headers: getHeaders() }).then(handleResponse),
+  getImageUsage: (url: string) => fetch(`${API_URL}/admin/image-usage?url=${encodeURIComponent(url)}`, { headers: getHeaders() }).then(handleResponse),
 
   // File Upload
-  uploadImage: async (file: File, context: 'product' | 'project', name: string) => {
+  uploadImage: async (file: File, context?: 'product' | 'project', name?: string) => {
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('context', context);
-      formData.append('name', name);
+      if (context) formData.append('context', context);
+      if (name) formData.append('name', name);
       
       const response = await fetch(`${API_URL}/upload`, {
           method: 'POST',
