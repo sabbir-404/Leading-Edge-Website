@@ -84,21 +84,24 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Initial Data Fetch
   useEffect(() => {
-    // Check Local Storage for user
     const storedUser = localStorage.getItem('furniture_user');
     if (storedUser) setUser(JSON.parse(storedUser));
 
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [prodData, catData, userData, projData, configData, pagesData, ordersData] = await Promise.all([
+        const [prodData, catData, userData, projData, configData, pagesData, ordersData, statsData, shipAreas, shipMethods, newsData] = await Promise.all([
           api.getProducts().catch(err => []), 
           api.getCategories().catch(err => []),
           api.getUsers().catch(err => []),
           api.getProjects().catch(err => []),
           api.getConfig().catch(err => {}),
           api.getPages().catch(err => []),
-          api.getOrders().catch(err => [])
+          api.getOrders().catch(err => []),
+          api.getStats().catch(err => MOCK_STATS),
+          api.getShippingAreas().catch(err => []),
+          api.getShippingMethods().catch(err => []),
+          api.getNewsletters().catch(err => [])
         ]);
 
         if (prodData.length > 0) setProducts(prodData);
@@ -108,6 +111,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (configData && Object.keys(configData).length > 0) setSiteConfig(configData);
         if (pagesData.length > 0) setCustomPages(pagesData);
         if (ordersData.length > 0) setOrders(ordersData);
+        if (statsData) setDashboardStats(statsData);
+        if (shipAreas.length > 0) setShippingAreas(shipAreas);
+        if (shipMethods.length > 0) setShippingMethods(shipMethods);
+        if (newsData.length > 0) setNewsletters(newsData);
         
       } catch (error) {
         console.error("Failed to fetch initial data", error);
@@ -120,7 +127,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchData();
   }, []);
 
-  // Toast Logic
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -405,18 +411,34 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (e: any) { showToast(e.message, 'error'); }
   };
 
-  const updateShippingAreas = (areas: ShippingArea[]) => setShippingAreas(areas);
-  const updateShippingMethods = (methods: ShippingMethod[]) => setShippingMethods(methods);
+  const updateShippingAreas = async (areas: ShippingArea[]) => {
+      try {
+          await api.updateShippingAreas(areas);
+          setShippingAreas(areas);
+          showToast('Shipping areas saved', 'success');
+      } catch (e: any) { showToast(e.message, 'error'); }
+  };
+  const updateShippingMethods = async (methods: ShippingMethod[]) => {
+      try {
+          await api.updateShippingMethods(methods);
+          setShippingMethods(methods);
+          showToast('Shipping methods saved', 'success');
+      } catch (e: any) { showToast(e.message, 'error'); }
+  };
 
-  const updateOrder = (order: Order) => {
-    setOrders(prev => prev.map(o => o.id === order.id ? order : o));
-    showToast('Order updated', 'success');
+  const updateOrder = async (order: Order) => {
+    try {
+        await api.updateOrder(order);
+        setOrders(prev => prev.map(o => o.id === order.id ? order : o));
+        showToast('Order updated', 'success');
+    } catch (e: any) { showToast(e.message, 'error'); }
   };
   
   const createOrder = async (order: Order) => {
     try {
       await api.createOrder(order);
       setOrders(prev => [order, ...prev]);
+      // Update local stats optimistically
       setDashboardStats(prev => ({
           ...prev,
           totalOrdersMonth: prev.totalOrdersMonth + 1,
@@ -429,9 +451,12 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const sendNewsletter = (campaign: NewsletterCampaign) => {
-    setNewsletters(prev => [campaign, ...prev]);
-    showToast('Newsletter sent', 'success');
+  const sendNewsletter = async (campaign: NewsletterCampaign) => {
+    try {
+        await api.sendNewsletter(campaign);
+        setNewsletters(prev => [campaign, ...prev]);
+        showToast('Newsletter sent', 'success');
+    } catch (e: any) { showToast(e.message, 'error'); }
   };
 
   return (

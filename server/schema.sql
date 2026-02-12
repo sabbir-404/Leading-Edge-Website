@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS products (
     model_number VARCHAR(100),
     image TEXT,
     is_visible BOOLEAN DEFAULT TRUE,
-    extra_data LONGTEXT, -- Stores JSON for variations, specs, features, weight, etc.
+    extra_data LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -65,11 +65,27 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id VARCHAR(50),
     customer_name VARCHAR(255),
     customer_email VARCHAR(255),
+    customer_phone VARCHAR(50),
     shipping_address TEXT,
+    subtotal DECIMAL(10, 2),
+    shipping_cost DECIMAL(10, 2),
+    tax DECIMAL(10, 2),
     total DECIMAL(10, 2),
     status VARCHAR(50) DEFAULT 'Pending',
     payment_status VARCHAR(50) DEFAULT 'Unpaid',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id VARCHAR(50),
+    product_id VARCHAR(50),
+    product_name VARCHAR(255),
+    quantity INT,
+    price DECIMAL(10, 2),
+    image TEXT,
+    selected_variation LONGTEXT, -- Stores JSON of variation
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS projects (
@@ -79,19 +95,43 @@ CREATE TABLE IF NOT EXISTS projects (
     cover_image TEXT,
     client VARCHAR(255),
     completion_date VARCHAR(50),
-    images LONGTEXT -- JSON array of strings
+    images LONGTEXT
 );
 
 CREATE TABLE IF NOT EXISTS site_config (
-    id VARCHAR(50) PRIMARY KEY, -- usually 'main-config'
-    config_data LONGTEXT -- Stores the entire SiteConfig JSON
+    id VARCHAR(50) PRIMARY KEY,
+    config_data LONGTEXT
 );
 
 CREATE TABLE IF NOT EXISTS custom_pages (
     id VARCHAR(50) PRIMARY KEY,
     slug VARCHAR(255) UNIQUE,
     title VARCHAR(255),
-    content_json LONGTEXT -- Stores Page structure
+    content_json LONGTEXT
+);
+
+CREATE TABLE IF NOT EXISTS shipping_areas (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS shipping_methods (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255),
+    type VARCHAR(50),
+    flat_rate DECIMAL(10, 2),
+    is_global BOOLEAN DEFAULT TRUE,
+    area_ids LONGTEXT, -- JSON Array
+    weight_rates LONGTEXT -- JSON Array
+);
+
+CREATE TABLE IF NOT EXISTS newsletter_campaigns (
+    id VARCHAR(50) PRIMARY KEY,
+    subject VARCHAR(255),
+    content TEXT,
+    sent_date DATE,
+    recipient_count INT,
+    status VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS audit_logs (
