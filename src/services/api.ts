@@ -32,6 +32,21 @@ export const api = {
   // Stats
   getStats: () => fetch(`${API_URL}/stats`, { headers: getHeaders() }).then(handleResponse),
 
+  // File Upload
+  uploadImage: async (file: File, context: 'product' | 'project', name: string) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('context', context);
+      formData.append('name', name);
+      
+      const response = await fetch(`${API_URL}/upload`, {
+          method: 'POST',
+          // Do NOT set Content-Type header manually for FormData, browser does it
+          body: formData
+      });
+      return handleResponse(response);
+  },
+
   // Products
   getProducts: () => fetch(`${API_URL}/products`, { headers }).then(handleResponse),
   getProduct: (id: string) => fetch(`${API_URL}/products/${id}`, { headers }).then(handleResponse),

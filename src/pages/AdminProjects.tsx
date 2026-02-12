@@ -1,11 +1,14 @@
+
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Project } from '../types';
 import { Plus, Trash2, Edit, Save, X, Upload } from 'lucide-react';
+import { api } from '../services/api';
 
 const AdminProjects: React.FC = () => {
-  const { projects, addProject, updateProject, deleteProject } = useShop();
+  const { projects, addProject, updateProject, deleteProject, showToast } = useShop();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   
   const initialForm: Project = { id: '', title: '', description: '', coverImage: '', images: [], client: '', date: '' };
   const [formData, setFormData] = useState<Project>(initialForm);
@@ -21,6 +24,7 @@ const AdminProjects: React.FC = () => {
   };
 
   const handleSave = () => {
+      if (!formData.title) return showToast('Title required', 'error');
       if (editingId === 'new') {
           addProject(formData);
       } else {
@@ -29,23 +33,27 @@ const AdminProjects: React.FC = () => {
       setEditingId(null);
   };
 
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, isCover: boolean) => {
+      if (!formData.title) {
+          showToast('Please enter a project title before uploading', 'error');
+          return;
+      }
       const file = e.target.files?.[0];
       if (file) {
-          const reader = new FileReader();
-          reader.onloadend = () => setFormData(prev => ({ ...prev, coverImage: reader.result as string }));
-          reader.readAsDataURL(file);
-      }
-  };
-
-  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files) {
-          Array.from(files).forEach(file => {
-              const reader = new FileReader();
-              reader.onloadend = () => setFormData(prev => ({ ...prev, images: [...prev.images, reader.result as string] }));
-              reader.readAsDataURL(file);
-          });
+          try {
+              setUploading(true);
+              const res = await api.uploadImage(file, 'project', formData.title);
+              if (isCover) {
+                  setFormData(prev => ({ ...prev, coverImage: res.url }));
+              } else {
+                  setFormData(prev => ({ ...prev, images: [...prev.images, res.url] }));
+              }
+              showToast('Image uploaded', 'success');
+          } catch (err: any) {
+              showToast(err.message, 'error');
+          } finally {
+              setUploading(false);
+          }
       }
   };
 
@@ -91,14 +99,14 @@ const AdminProjects: React.FC = () => {
                    <div className="space-y-6">
                        <div>
                            <label className="block text-sm font-bold mb-2">Cover Image</label>
-                           <div className="flex gap-4 items-end">
+                           <div className="flex gap-4 items-center">
                                <div className="w-32 h-20 bg-gray-100 rounded overflow-hidden border">
                                    {formData.coverImage && <img src={formData.coverImage} className="w-full h-full object-cover" />}
                                </div>
-                               <div className="flex-1">
-                                   <input className="w-full text-xs mb-2" type="file" onChange={handleCoverUpload} />
-                                   <input className="w-full border p-1 rounded text-xs" placeholder="Or Image URL" value={formData.coverImage} onChange={e => setFormData({...formData, coverImage: e.target.value})} />
-                               </div>
+                               <label className={`cursor-pointer bg-blue-50 text-blue-600 px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-blue-100 ${uploading ? 'opacity-50' : ''}`}>
+                                   <Upload size={16} /> Upload Cover
+                                   <input className="hidden" type="file" onChange={(e) => handleUpload(e, true)} />
+                               </label>
                            </div>
                        </div>
 
@@ -112,7 +120,10 @@ const AdminProjects: React.FC = () => {
                                    </div>
                                ))}
                            </div>
-                           <input className="w-full text-xs" type="file" multiple onChange={handleGalleryUpload} />
+                           <label className={`cursor-pointer bg-gray-100 text-gray-700 px-4 py-2 rounded text-sm font-bold inline-flex items-center gap-2 hover:bg-gray-200 ${uploading ? 'opacity-50' : ''}`}>
+                               <Plus size={16} /> Add Gallery Image
+                               <input className="hidden" type="file" onChange={(e) => handleUpload(e, false)} />
+                           </label>
                        </div>
                    </div>
                </div>
