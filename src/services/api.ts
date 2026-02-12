@@ -23,8 +23,17 @@ const getHeaders = () => {
 
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-    throw new Error(error.message || response.statusText);
+    let errorMessage = response.statusText;
+    try {
+        const errorData = await response.json();
+        // Look for 'message' (standard) or 'error' (legacy)
+        errorMessage = errorData.message || errorData.error || errorMessage || 'An unknown error occurred';
+    } catch (e) {
+        // If JSON parse fails, try text
+        const textError = await response.text().catch(() => '');
+        if (textError) errorMessage = textError;
+    }
+    throw new Error(errorMessage);
   }
   return response.json();
 };

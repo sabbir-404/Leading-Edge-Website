@@ -76,8 +76,8 @@ async function checkExists(table, column, value, excludeId = null) {
 // Sync function to ensure all files on disk are in the database
 async function syncMediaLibrary() {
     const directories = ['uploads/products', 'uploads/projects', 'uploads/gallery'];
-    const serverUrl = 'http://localhost:' + PORT; // Approximation for relative paths logic
-
+    // serverUrl is calculated in the route handler, not needed here for DB insertion
+    
     for (const dir of directories) {
         const fullPath = path.join(__dirname, dir);
         if (fs.existsSync(fullPath)) {
@@ -90,9 +90,10 @@ async function syncMediaLibrary() {
                 const [rows] = await pool.query('SELECT id FROM media_library WHERE file_path = ?', [filePath]);
                 if (rows.length === 0) {
                     const stats = fs.statSync(path.join(fullPath, file));
+                    const mimeType = 'image/' + path.extname(file).substring(1).toLowerCase();
                     await pool.query(
                         'INSERT INTO media_library (file_name, file_path, folder, file_size, mime_type) VALUES (?, ?, ?, ?, ?)',
-                        [file, filePath, dir.replace('uploads/', ''), stats.size, 'image/' + path.extname(file).substring(1)]
+                        [file, filePath, dir.replace('uploads/', ''), stats.size, mimeType]
                     );
                 }
             }
@@ -119,7 +120,7 @@ app.get('/api/admin/search', async (req, res) => {
 
         res.json([...products, ...orders, ...users, ...pages]);
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 
@@ -143,7 +144,8 @@ app.get('/api/admin/images', async (req, res) => {
         
         res.json(images);
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        console.error("Gallery Error:", e);
+        res.status(500).json({ message: e.message });
     }
 });
 
@@ -172,14 +174,14 @@ app.get('/api/admin/image-usage', async (req, res) => {
 
         res.json(references);
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 
 // --- IMAGE UPLOAD ENDPOINT ---
 app.post('/api/upload', upload.single('image'), async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
         const { context, name } = req.body; 
         
@@ -238,7 +240,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 
     } catch (error) {
         console.error("Upload Error:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -253,7 +255,7 @@ app.get('/api/audit-logs', async (req, res) => {
         }));
         res.json(logs);
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 
@@ -300,7 +302,7 @@ app.get('/api/stats', async (req, res) => {
         res.json(stats);
     } catch (e) {
         console.error("Stats Error:", e);
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 
@@ -327,7 +329,7 @@ app.get('/api/products', async (req, res) => {
        product.modelNumber = product.model_number;
     }
     res.json(rows);
-  } catch (error) { res.status(500).json({ error: error.message }); }
+  } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
 app.post('/api/products', async (req, res) => {
@@ -392,7 +394,7 @@ app.get('/api/users', async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT id, name, email, role, phone, address, join_date FROM users');
         res.json(rows.map(r => ({ id: r.id, name: r.name, email: r.email, role: r.role, phone: r.phone, address: r.address, joinDate: r.join_date })));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 app.post('/api/users', async (req, res) => {
@@ -404,7 +406,7 @@ app.post('/api/users', async (req, res) => {
         await conn.query('INSERT INTO users (id, name, email, password_hash, role, phone, address, join_date) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())', [u.id, u.name, u.email, u.password || '123456', u.role, u.phone, u.address]);
         await logAction(conn, adminEmail, 'CREATE_USER', u.id, { email: u.email }, { role: { from: null, to: u.role }});
         res.status(201).json({ message: 'User created' });
-    } catch (e) { res.status(500).json({ error: e.message }); } finally { conn.release(); }
+    } catch (e) { res.status(500).json({ message: e.message }); } finally { conn.release(); }
 });
 
 app.put('/api/users/:id', async (req, res) => {
@@ -427,7 +429,7 @@ app.put('/api/users/:id', async (req, res) => {
         const changes = getDiff(oldData, u, ['password_hash']);
         await logAction(conn, adminEmail, 'UPDATE_USER', req.params.id, { email: u.email }, changes);
         res.json({ message: 'User updated' });
-    } catch (e) { res.status(500).json({ error: e.message }); } finally { conn.release(); }
+    } catch (e) { res.status(500).json({ message: e.message }); } finally { conn.release(); }
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -442,7 +444,7 @@ app.post('/api/auth/login', async (req, res) => {
             }
         }
         res.status(401).json({ message: 'Invalid credentials' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 app.get('/api/projects', async (req, res) => {

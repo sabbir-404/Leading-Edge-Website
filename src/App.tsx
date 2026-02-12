@@ -35,6 +35,7 @@ import AdminLayout from './components/AdminLayout';
 import ToastContainer from './components/ToastContainer';
 import FloatingContact from './components/FloatingContact';
 import CookieConsent from './components/CookieConsent';
+import ScrollManager from './components/ScrollManager';
 import { ShopProvider } from './context/ShopContext';
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
@@ -101,6 +102,7 @@ const App: React.FC = () => {
   return (
     <ShopProvider>
       <Router>
+        <ScrollManager />
         <AnimatedRoutes />
         <FloatingContact />
         <CookieConsent />
