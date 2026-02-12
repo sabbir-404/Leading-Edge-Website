@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -35,7 +36,8 @@ const ProjectsGallery: React.FC = () => {
                      <div className="relative aspect-[16/9] overflow-hidden rounded-xl mb-6 bg-gray-100">
                         <img 
                            src={project.coverImage} 
-                           alt={project.title} 
+                           alt={`Cover image for ${project.title}`} 
+                           loading="lazy"
                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

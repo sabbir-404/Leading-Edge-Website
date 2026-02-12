@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useShop } from '../context/ShopContext';
 
@@ -21,7 +22,8 @@ const BrandSlider: React.FC = () => {
             <div key={`${brand.id}-${idx}`} className="w-32 h-20 md:w-40 md:h-24 flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity grayscale hover:grayscale-0">
               <img 
                 src={brand.logo} 
-                alt={brand.name} 
+                alt={`${brand.name} logo`} 
+                loading="lazy"
                 className="max-w-full max-h-full object-contain"
               />
             </div>

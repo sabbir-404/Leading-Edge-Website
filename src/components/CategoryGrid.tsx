@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +31,8 @@ const CategoryGrid: React.FC = () => {
                 {cat.image ? (
                   <img 
                     src={cat.image} 
-                    alt={cat.name} 
+                    alt={`Browse ${cat.name} category`} 
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 ) : (

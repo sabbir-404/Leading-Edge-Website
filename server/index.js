@@ -185,7 +185,9 @@ app.get('/api/admin/images', async (req, res) => {
         await syncMediaLibrary();
         const [rows] = await pool.query('SELECT * FROM media_library ORDER BY upload_date DESC');
         
-        const serverUrl = `${req.protocol}://${req.get('host')}`;
+        // CDN Support: Use CDN_URL env var if available, otherwise fallback to local
+        const serverUrl = process.env.CDN_URL || `${req.protocol}://${req.get('host')}`;
+        
         const images = rows.map(row => ({
             id: row.id,
             name: row.file_name,
@@ -270,10 +272,41 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         const relativePath = `${targetDir}/${finalFilename}`;
         const thumbPath = path.join(__dirname, thumbDir, finalFilename);
 
-        // Process Image: Move from temp to target
-        await fs.move(req.file.path, finalPath);
+        // Process Image: Optimize and Move
+        if (/\.gif$/i.test(req.file.originalname)) {
+            // Skip complex optimization for GIFs to preserve animation simply for now
+            await fs.move(req.file.path, finalPath);
+        } else {
+            try {
+                const image = sharp(req.file.path);
+                const metadata = await image.metadata();
+                
+                // Resize if extremely large (>2500px width)
+                if (metadata.width > 2500) {
+                    image.resize({ width: 2500, withoutEnlargement: true });
+                }
+                
+                // Auto-rotate based on EXIF data
+                image.rotate();
+
+                // Compress based on format
+                if (metadata.format === 'jpeg' || metadata.format === 'jpg') {
+                    image.jpeg({ quality: 80, mozjpeg: true });
+                } else if (metadata.format === 'png') {
+                    image.png({ quality: 80, compressionLevel: 8, palette: true });
+                } else if (metadata.format === 'webp') {
+                    image.webp({ quality: 80 });
+                }
+                
+                await image.toFile(finalPath);
+                await fs.remove(req.file.path); // Remove temp file
+            } catch(e) {
+                console.error("Image optimization failed, falling back to raw move", e);
+                await fs.move(req.file.path, finalPath); 
+            }
+        }
         
-        // Generate Thumbnail
+        // Generate Thumbnail (200px width)
         try {
             await sharp(finalPath).resize(200).toFile(thumbPath);
         } catch(err) {
@@ -282,15 +315,17 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 
         // Store in Database
         try {
+            const stats = await fs.stat(finalPath);
             await pool.query(
                 'INSERT INTO media_library (file_name, file_path, folder, file_size, mime_type) VALUES (?, ?, ?, ?, ?)',
-                [finalFilename, relativePath, targetDir.replace('uploads/', ''), req.file.size, req.file.mimetype]
+                [finalFilename, relativePath, targetDir.replace('uploads/', ''), stats.size, req.file.mimetype]
             );
         } catch (dbErr) {
             console.error("DB Insert failed for image (ignoring)", dbErr.message);
         }
 
-        const serverUrl = `${req.protocol}://${req.get('host')}`;
+        // CDN Support for returned URL
+        const serverUrl = process.env.CDN_URL || `${req.protocol}://${req.get('host')}`;
         
         res.json({
             url: `${serverUrl}/${relativePath}`,

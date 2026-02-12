@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CATALOGUES } from '../constants';
@@ -21,7 +22,8 @@ const CatalogueSlider: React.FC = () => {
               <div className="relative aspect-[3/4] overflow-hidden rounded-lg shadow-md mb-4">
                 <img 
                   src={cat.coverImage} 
-                  alt={cat.title} 
+                  alt={`${cat.title} Cover`} 
+                  loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">

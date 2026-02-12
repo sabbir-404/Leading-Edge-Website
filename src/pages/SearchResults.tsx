@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
@@ -47,6 +48,7 @@ const SearchResults: React.FC = () => {
                   <img 
                     src={product.image} 
                     alt={product.name} 
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   {product.onSale && (
